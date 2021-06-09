@@ -1,31 +1,74 @@
-# Welcome to your new OSS project
+Legion::Data
+=====
 
-This project currently has the base documentation files required.  Replace this
-file with your own README.md.
+Legion::Data is a gem for the LegionIO framework to use persistent storage. Currently only MySQL is supported
 
-## Files included
+Supported Ruby versions and implementations
+------------------------------------------------
 
-**CODE_OF_CONDUCT.md**
+Legion::Json should work identically on:
 
-Use without changes
+* Ruby 2.5+
 
-**INDIVIDUAL_CONTRIBUTOR_LICENSE.md**
 
-Use without changes
+Installation and Usage
+------------------------
 
-**CONTRIBUTING.md**
+You can verify your installation using this piece of code:
 
-This file has some portions that are required and others that can be customized.
-Customize the Coding Standards section to mention the languages used by your project.
-Feel free to add any rules and requirements that you would like people to follow
-when contributing to your project.
+```bash
+gem install legion-data
+```
 
-**NOTICE.txt**
+```ruby
+require 'legion/data'
 
-This file is needed if your project is licensed under the Apache 2.0 license.  
-If you are using this license, fill it out according to the prompts.  Otherwise,
-delete this file.
+Legion::Data.setup
+Legion::Data.connected? # => true
+Legion::Data::Model::Extension.all # Sequel::Dataset
+```
 
-## Additional Repo Updates
+Settings
+----------
 
-Make sure that you have a project description and appropriate repository topics.
+```json
+{
+  "connected": false,
+  "cache": {
+    "connected": false,
+    "auto_enable": null,
+    "ttl": 60
+  },
+  "connection": {
+    "log": false,
+    "log_connection_info": false,
+    "log_warn_duration": 1,
+    "log_warn_duration": "debug",
+    "max_connections": 10,
+    "preconnect": false
+  },
+  "creds": {
+    "username": "legion",
+    "password": "legion",
+    "database": "legionio",
+    "host": "127.0.0.1",
+    "port": 3306
+  },
+  "migrations": {
+    "continue_on_fail": false,
+    "auto_migrate": true,
+    "ran": false,
+    "version": null
+  },
+  "models": {
+    "continue_on_load_fail": false,
+    "autoload": true
+  },
+  "connect_on_start": true
+}
+```
+
+Authors
+----------
+
+* [Matthew Iverson](https://github.com/Esity) - current maintainer
