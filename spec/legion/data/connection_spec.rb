@@ -18,15 +18,10 @@ RSpec.describe 'Legion::Data::Connection' do
     expect(Legion::Settings[:data][:connected]).to eq false
   end
 
-  it 'has default_creds' do
-    expect(Legion::Data::Connection.default_creds).to be_a Hash
-    expect(Legion::Data::Connection.default_creds[:host]).to eq '127.0.0.1'
-    expect(Legion::Data::Connection.default_creds[:port]).to eq 3306
-    expect(Legion::Data::Connection.default_creds[:username]).to eq 'legion'
-    expect(Legion::Data::Connection.default_creds[:password]).to eq 'legion'
-    expect(Legion::Data::Connection.default_creds[:database]).to eq 'legion'
-    expect(Legion::Data::Connection.default_creds[:preconnect]).to eq nil
-    expect(Legion::Data::Connection.default_creds[:max_connections]).to eq 4
+  it 'has creds_builder' do
+    creds = Legion::Data::Connection.creds_builder
+    expect(creds).to be_a Hash
+    expect(creds[:database]).to eq 'legionio.db'
   end
 
   it 'can setup with logger' do

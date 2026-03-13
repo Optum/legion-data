@@ -5,7 +5,9 @@ require 'sequel/extensions/migration'
 Sequel.migration do
   up do
     alter_table(:schema_info) do
-      add_column :created_at, DateTime, default: Sequel::CURRENT_TIMESTAMP, null: false
+      # SQLite does not support non-constant defaults in ALTER TABLE ADD COLUMN,
+      # so we omit the default here and let the application set timestamps.
+      add_column :created_at, DateTime, null: true
       add_column :updated_at, DateTime, null: true
       add_column :catalog, String, size: 255, null: true
     end
