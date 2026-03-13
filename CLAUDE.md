@@ -1,8 +1,7 @@
 # legion-data: Persistent Storage for LegionIO
 
 **Repository Level 3 Documentation**
-- **Category**: `/Users/miverso2/rubymine/arc/CLAUDE.md`
-- **Workspace**: `/Users/miverso2/rubymine/CLAUDE.md`
+- **Parent**: `/Users/miverso2/rubymine/legion/CLAUDE.md`
 
 ## Purpose
 
