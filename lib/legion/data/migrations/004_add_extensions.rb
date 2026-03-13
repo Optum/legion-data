@@ -1,22 +1,18 @@
 Sequel.migration do
   up do
-    run "CREATE TABLE `extensions` (
-      `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-      `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
-      `name` varchar(128) NOT NULL,
-      `namespace` varchar(128) NOT NULL DEFAULT '',
-      `exchange` varchar(255) DEFAULT NULL,
-      `uri` varchar(256) DEFAULT NULL,
-      `schema_version` int(11) unsigned NOT NULL DEFAULT 0,
-      `updated` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `name_namespace` (`name`,`namespace`),
-      KEY `active` (`active`),
-      KEY `name` (`name`),
-      KEY `namespace` (`namespace`),
-      key `schema_version` (`schema_version`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    create_table(:extensions) do
+      primary_key :id
+      TrueClass :active, null: false, default: true, index: true
+      String :name, size: 128, null: false, index: true
+      String :namespace, size: 128, null: false, default: '', index: true
+      String :exchange, size: 255, null: true
+      String :uri, size: 256, null: true
+      Integer :schema_version, null: false, default: 0, index: true
+      DateTime :updated, null: true
+      DateTime :created, null: false, default: Sequel::CURRENT_TIMESTAMP
+
+      unique %i[name namespace]
+    end
   end
 
   down do

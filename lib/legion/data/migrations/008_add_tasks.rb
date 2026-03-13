@@ -1,26 +1,18 @@
 Sequel.migration do
   up do
-    run "CREATE TABLE `tasks` (
-      `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-      `relationship_id` int(11) unsigned DEFAULT NULL,
-      `function_id` int(11) unsigned DEFAULT NULL,
-      `status` varchar(255) NOT NULL,
-      `parent_id` int(11) unsigned DEFAULT NULL,
-      `master_id` int(11) unsigned DEFAULT NULL,
-      `function_args` text,
-      `results` text,
-      `payload` text,
-      `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      KEY `status` (`status`),
-      KEY `parent_id` (`parent_id`),
-      KEY `master_id` (`master_id`),
-      KEY `relationship_id` (`relationship_id`),
-      KEY `function_id` (`function_id`),
-      CONSTRAINT `parent_id` FOREIGN KEY (`parent_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-      CONSTRAINT `master_id` FOREIGN KEY (`master_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    create_table(:tasks) do
+      primary_key :id
+      Integer :relationship_id, null: true
+      foreign_key :function_id, :functions, null: true
+      String :status, size: 255, null: false, index: true
+      foreign_key :parent_id, :tasks, null: true, on_delete: :set_null, on_update: :cascade, index: true
+      foreign_key :master_id, :tasks, null: true, on_delete: :set_null, on_update: :cascade, index: true
+      String :function_args, text: true, null: true
+      String :results, text: true, null: true
+      String :payload, text: true, null: true
+      DateTime :created, null: false, default: Sequel::CURRENT_TIMESTAMP
+      DateTime :updated, null: true
+    end
   end
 
   down do

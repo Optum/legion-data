@@ -3,25 +3,23 @@ require 'sequel'
 module Legion
   module Data
     module Connection
+      ADAPTERS = %i[sqlite mysql2 postgres].freeze
+
       class << self
         attr_accessor :sequel
 
         def adapter
-          @adapter ||= RUBY_ENGINE == 'jruby' ? :jdbc : :mysql2
+          @adapter ||= Legion::Settings[:data][:adapter]&.to_sym || :sqlite
         end
 
         def setup
-          @sequel = if adapter == :mysql2
-                      ::Sequel.connect(adapter: adapter, **creds_builder)
+          @sequel = if adapter == :sqlite
+                      ::Sequel.sqlite(sqlite_path)
                     else
-                      ::Sequel.connect("jdbc:mysql://#{creds_builder[:host]}:#{creds_builder[:port]}/#{creds_builder[:database]}?user=#{creds_builder[:username]}&password=#{creds_builder[:password]}&serverTimezone=UTC") # rubocop:disable Layout/LineLength
+                      ::Sequel.connect(adapter: adapter, **creds_builder)
                     end
           Legion::Settings[:data][:connected] = true
-          return if Legion::Settings[:data][:connection].nil? || Legion::Settings[:data][:connection][:log].nil?
-
-          @sequel.logger = Legion::Logging
-          @sequel.sql_log_level = Legion::Settings[:data][:connection][:sql_log_level]
-          @sequel.log_warn_duration = Legion::Settings[:data][:connection][:log_warn_duration]
+          configure_logging
         end
 
         def shutdown
@@ -30,14 +28,8 @@ module Legion
         end
 
         def creds_builder(final_creds = {})
-          final_creds.merge! Legion::Data::Settings.creds
+          final_creds.merge! Legion::Data::Settings.creds(adapter)
           final_creds.merge! Legion::Settings[:data][:creds] if Legion::Settings[:data][:creds].is_a? Hash
-
-          # if Legion::Settings[:data][:connection][:max_connections].is_a? Integer
-          #   final_creds[:max_connections] = Legion::Settings[:data][:connection][:max_connections]
-          # end
-
-          # final_creds[:preconnect] = :concurrently if Legion::Settings[:data][:connection][:preconnect]
 
           return final_creds if Legion::Settings[:vault].nil?
 
@@ -50,15 +42,18 @@ module Legion
           final_creds
         end
 
-        def default_creds
-          {
-            host: '127.0.0.1',
-            port: 3306,
-            username: 'legion',
-            password: 'legion',
-            database: 'legion',
-            max_connections: 4
-          }
+        private
+
+        def sqlite_path
+          Legion::Settings[:data][:creds][:database] || 'legionio.db'
+        end
+
+        def configure_logging
+          return if Legion::Settings[:data][:connection].nil? || Legion::Settings[:data][:connection][:log].nil?
+
+          @sequel.logger = Legion::Logging
+          @sequel.sql_log_level = Legion::Settings[:data][:connection][:sql_log_level]
+          @sequel.log_warn_duration = Legion::Settings[:data][:connection][:log_warn_duration]
         end
       end
     end

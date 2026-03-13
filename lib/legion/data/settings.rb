@@ -1,8 +1,29 @@
 module Legion
   module Data
     module Settings
+      CREDS = {
+        sqlite: {
+          database: 'legionio.db'
+        },
+        mysql2: {
+          username: 'legion',
+          password: 'legion',
+          database: 'legionio',
+          host: '127.0.0.1',
+          port: 3306
+        },
+        postgres: {
+          user: 'legion',
+          password: 'legion',
+          database: 'legionio',
+          host: '127.0.0.1',
+          port: 5432
+        }
+      }.freeze
+
       def self.default
         {
+          adapter: 'sqlite',
           connected: false,
           cache: cache,
           connection: connection,
@@ -40,14 +61,9 @@ module Legion
         }
       end
 
-      def self.creds
-        {
-          username: 'legion',
-          password: 'legion',
-          database: 'legionio',
-          host: '127.0.0.1',
-          port: 3306
-        }
+      def self.creds(adapter = nil)
+        adapter = (adapter || :sqlite).to_sym
+        CREDS.fetch(adapter, CREDS[:sqlite]).dup
       end
 
       def self.cache

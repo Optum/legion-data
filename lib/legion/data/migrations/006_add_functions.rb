@@ -1,20 +1,16 @@
 Sequel.migration do
   up do
-    run "CREATE TABLE `functions` (
-      `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-      `name` varchar(128) NOT NULL,
-      `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
-      `runner_id` int(11) unsigned NOT NULL,
-      `args` text,
-      `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `runner_id` (`runner_id`,`name`),
-      KEY `active` (`active`),
-      KEY `namespace` (`runner_id`),
-      KEY `name` (`name`),
-      CONSTRAINT `function_runner_id` FOREIGN KEY (`runner_id`) REFERENCES `runners` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    create_table(:functions) do
+      primary_key :id
+      String :name, size: 128, null: false, index: true
+      TrueClass :active, null: false, default: true, index: true
+      foreign_key :runner_id, :runners, null: false, on_delete: :cascade, on_update: :cascade, index: true
+      String :args, text: true, null: true
+      DateTime :created, null: false, default: Sequel::CURRENT_TIMESTAMP
+      DateTime :updated, null: true
+
+      unique %i[runner_id name]
+    end
   end
 
   down do

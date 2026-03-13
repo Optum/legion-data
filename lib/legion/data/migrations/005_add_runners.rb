@@ -1,18 +1,16 @@
 Sequel.migration do
   up do
-    run "CREATE TABLE `runners` (
-      `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-      `extension_id` int(11) unsigned NOT NULL,
-      `name` varchar(256) NOT NULL DEFAULT '',
-      `namespace` varchar(256) NOT NULL DEFAULT '',
-      `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
-      `queue` varchar(256) DEFAULT NULL,
-      `uri` varchar(256) DEFAULT NULL,
-      `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      CONSTRAINT `runner_extension_id` FOREIGN KEY (`extension_id`) REFERENCES `extensions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    create_table(:runners) do
+      primary_key :id
+      foreign_key :extension_id, :extensions, null: false, on_delete: :cascade, on_update: :cascade
+      String :name, size: 256, null: false, default: ''
+      String :namespace, size: 256, null: false, default: ''
+      TrueClass :active, null: false, default: true
+      String :queue, size: 256, null: true
+      String :uri, size: 256, null: true
+      DateTime :created, null: false, default: Sequel::CURRENT_TIMESTAMP
+      DateTime :updated, null: true
+    end
   end
 
   down do

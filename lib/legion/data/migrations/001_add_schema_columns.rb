@@ -2,9 +2,11 @@ require 'sequel/extensions/migration'
 
 Sequel.migration do
   up do
-    run 'ALTER TABLE `schema_info` ADD `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `version`;'
-    run 'ALTER TABLE `schema_info` ADD `updated_at` TIMESTAMP  NULL  ON UPDATE CURRENT_TIMESTAMP  AFTER `created_at`;'
-    run 'ALTER TABLE `schema_info` ADD `catalog` VARCHAR(255)  NULL  DEFAULT NULL  AFTER `version`;'
+    alter_table(:schema_info) do
+      add_column :created_at, DateTime, default: Sequel::CURRENT_TIMESTAMP, null: false
+      add_column :updated_at, DateTime, null: true
+      add_column :catalog, String, size: 255, null: true
+    end
   end
 
   down do
