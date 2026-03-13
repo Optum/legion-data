@@ -30,7 +30,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'legion-settings'
   spec.add_dependency 'sequel', '>= 5.70'
   spec.add_dependency 'sqlite3', '>= 2.0'
-
-  spec.add_development_dependency 'mysql2', '>= 0.5.5'
-  spec.add_development_dependency 'pg', '>= 1.5'
 end

@@ -10,3 +10,5 @@ group :test do
   gem 'rubocop'
   gem 'simplecov'
 end
+gem 'mysql2', '>= 0.5.5'
+gem 'pg', '>= 1.5'
