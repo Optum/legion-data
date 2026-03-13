@@ -65,7 +65,7 @@ Legion::Data (singleton module)
 - **Cross-DB Migrations**: All migrations use Sequel DSL (no raw SQL), portable across SQLite/MySQL/PostgreSQL
 - **Auto-Migration**: Runs Sequel migrations on startup (`auto_migrate: true` by default)
 - **Sequel ORM**: All models are `Sequel::Model` subclasses
-- **Optional Caching**: Can plug into `legion-cache` for model-level caching via Sequel plugin
+- **Optional Caching**: `setup_cache` checks for `Legion::Cache` presence but Sequel model caching is currently disabled (code is commented out, pending implementation)
 - **CLI Executable**: Ships with `legion-data` executable in `exe/`
 
 ## Default Settings
@@ -118,7 +118,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting) |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
-| `exe/` | CLI executable |
+| `exe/legionio_migrate` | CLI executable for running database migrations standalone |
 
 ## Role in LegionIO
 
