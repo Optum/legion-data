@@ -1,9 +1,0 @@
-Legion::Crypt(legion-crypt)
-Copyright 2021 Optum
-
-Project Description:
-====================
-Manage
-
-Author(s):
-Esity

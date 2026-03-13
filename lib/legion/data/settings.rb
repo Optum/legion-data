@@ -1,35 +1,37 @@
+# frozen_string_literal: true
+
 module Legion
   module Data
     module Settings
       CREDS = {
-        sqlite: {
+        sqlite:   {
           database: 'legionio.db'
         },
-        mysql2: {
+        mysql2:   {
           username: 'legion',
           password: 'legion',
           database: 'legionio',
-          host: '127.0.0.1',
-          port: 3306
+          host:     '127.0.0.1',
+          port:     3306
         },
         postgres: {
-          user: 'legion',
+          user:     'legion',
           password: 'legion',
           database: 'legionio',
-          host: '127.0.0.1',
-          port: 5432
+          host:     '127.0.0.1',
+          port:     5432
         }
       }.freeze
 
       def self.default
         {
-          adapter: 'sqlite',
-          connected: false,
-          cache: cache,
-          connection: connection,
-          creds: creds,
-          migrations: migrations,
-          models: models,
+          adapter:          'sqlite',
+          connected:        false,
+          cache:            cache,
+          connection:       connection,
+          creds:            creds,
+          migrations:       migrations,
+          models:           models,
           connect_on_start: true
         }
       end
@@ -37,27 +39,27 @@ module Legion
       def self.models
         {
           continue_on_load_fail: false,
-          autoload: true
+          autoload:              true
         }
       end
 
       def self.migrations
         {
           continue_on_fail: false,
-          auto_migrate: true,
-          ran: false,
-          version: nil
+          auto_migrate:     true,
+          ran:              false,
+          version:          nil
         }
       end
 
       def self.connection
         {
-          log: false,
+          log:                 false,
           log_connection_info: false,
-          log_warn_duration: 1,
-          sql_log_level: 'debug',
-          max_connections: 10,
-          preconnect: false
+          log_warn_duration:   1,
+          sql_log_level:       'debug',
+          max_connections:     10,
+          preconnect:          false
         }
       end
 
@@ -68,9 +70,9 @@ module Legion
 
       def self.cache
         {
-          connected: false,
+          connected:   false,
           auto_enable: Legion::Settings[:cache][:connected],
-          ttl: 60
+          ttl:         60
         }
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'legion/data/version'
 require 'legion/data/settings'
 require 'sequel'
@@ -37,7 +39,7 @@ module Legion
       def setup_cache
         return if Legion::Settings[:data][:cache][:enabled]
 
-        return unless defined?(::Legion::Cache)
+        nil unless defined?(::Legion::Cache)
 
         # Legion::Data::Model::Relationship.plugin :caching, Legion::Cache, ttl: 10
         # Legion::Data::Model::Runner.plugin :caching, Legion::Cache, ttl: 60
