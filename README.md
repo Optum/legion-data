@@ -1,74 +1,96 @@
-Legion::Data
-=====
+# legion-data
 
-Legion::Data is a gem for the LegionIO framework to use persistent storage. Currently only MySQL is supported
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, and settings.
 
-Supported Ruby versions and implementations
-------------------------------------------------
+## Supported Databases
 
-Legion::Json should work identically on:
+| Database | Adapter | Gem | Default |
+|----------|---------|-----|---------|
+| SQLite | `sqlite` | `sqlite3` (included) | Yes |
+| MySQL | `mysql2` | `mysql2` | No |
+| PostgreSQL | `postgres` | `pg` | No |
 
-* Ruby 2.5+
+SQLite is the default adapter and requires no external database server. For MySQL or PostgreSQL, install the corresponding gem and set the adapter in your configuration.
 
-
-Installation and Usage
-------------------------
-
-You can verify your installation using this piece of code:
+## Installation
 
 ```bash
 gem install legion-data
 ```
 
+Or add to your Gemfile:
+
+```ruby
+gem 'legion-data'
+
+# Add one of these for production databases:
+# gem 'mysql2', '>= 0.5.5'
+# gem 'pg', '>= 1.5'
+```
+
+## Usage
+
 ```ruby
 require 'legion/data'
 
 Legion::Data.setup
-Legion::Data.connected? # => true
-Legion::Data::Model::Extension.all # Sequel::Dataset
+Legion::Data.connection # => Sequel::Database
+Legion::Data::Model::Extension.all # => Sequel::Dataset
 ```
 
-Settings
-----------
+## Configuration
+
+### SQLite (default)
 
 ```json
 {
-  "connected": false,
-  "cache": {
-    "connected": false,
-    "auto_enable": null,
-    "ttl": 60
-  },
-  "connection": {
-    "log": false,
-    "log_connection_info": false,
-    "log_warn_duration": 1,
-    "log_warn_duration": "debug",
-    "max_connections": 10,
-    "preconnect": false
-  },
-  "creds": {
-    "username": "legion",
-    "password": "legion",
-    "database": "legionio",
-    "host": "127.0.0.1",
-    "port": 3306
-  },
-  "migrations": {
-    "continue_on_fail": false,
-    "auto_migrate": true,
-    "ran": false,
-    "version": null
-  },
-  "models": {
-    "continue_on_load_fail": false,
-    "autoload": true
-  },
-  "connect_on_start": true
+  "data": {
+    "adapter": "sqlite",
+    "creds": {
+      "database": "legionio.db"
+    }
+  }
 }
 ```
 
-Authors
-----------
+### MySQL
 
-* [Matthew Iverson](https://github.com/Esity) - current maintainer
+```json
+{
+  "data": {
+    "adapter": "mysql2",
+    "creds": {
+      "username": "legion",
+      "password": "legion",
+      "database": "legionio",
+      "host": "127.0.0.1",
+      "port": 3306
+    }
+  }
+}
+```
+
+### PostgreSQL
+
+```json
+{
+  "data": {
+    "adapter": "postgres",
+    "creds": {
+      "user": "legion",
+      "password": "legion",
+      "database": "legionio",
+      "host": "127.0.0.1",
+      "port": 5432
+    }
+  }
+}
+```
+
+## Requirements
+
+- Ruby >= 3.4
+
+## License
+
+Apache-2.0
