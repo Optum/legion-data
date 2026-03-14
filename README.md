@@ -1,6 +1,6 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, and settings.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, settings, and digital workers.
 
 ## Supported Databases
 

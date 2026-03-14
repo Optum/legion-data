@@ -7,7 +7,7 @@ module Legion
         attr_reader :loaded_models
 
         def models
-          %w[extension function task runner node setting]
+          %w[extension function task runner node setting digital_worker]
         end
 
         def load

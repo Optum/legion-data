@@ -34,7 +34,7 @@ Legion::Data (singleton module)
 │   ├── .sequel        # Raw Sequel::Database accessor
 │   └── .shutdown      # Close connection
 │
-├── Migration          # Auto-migration system (8 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (10 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -43,7 +43,9 @@ Legion::Data (singleton module)
 │       ├── 005_add_runners
 │       ├── 006_add_functions
 │       ├── 007_add_default_extensions
-│       └── 008_add_tasks
+│       ├── 008_add_tasks
+│       ├── 009_add_digital_workers
+│       └── 010_add_value_metrics
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -53,7 +55,10 @@ Legion::Data (singleton module)
 │       ├── Node       # Cluster node registry
 │       ├── Task       # Task instances
 │       ├── TaskLog    # Task execution logs
-│       └── Setting    # Persistent settings store
+│       ├── Setting    # Persistent settings store
+│       └── DigitalWorker  # Digital worker registry (AI-as-labor platform)
+│   Note: value_metrics table (migration 010) is accessed via raw Sequel dataset,
+│         not via a named Sequel::Model subclass.
 │
 ├── Settings           # Default DB config with per-adapter credential presets
 └── Version
@@ -66,7 +71,7 @@ Legion::Data (singleton module)
 - **Auto-Migration**: Runs Sequel migrations on startup (`auto_migrate: true` by default)
 - **Sequel ORM**: All models are `Sequel::Model` subclasses
 - **Optional Caching**: `setup_cache` checks for `Legion::Cache` presence but Sequel model caching is currently disabled (code is commented out, pending implementation)
-- **CLI Executable**: Ships with `legion-data` executable in `exe/`
+- **CLI Executable**: Ships with `legionio_migrate` executable in `exe/` for running database migrations standalone
 
 ## Default Settings
 
@@ -113,9 +118,9 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 8 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 10 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
-| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting) |
+| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker) |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |
