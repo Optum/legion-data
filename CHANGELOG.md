@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.3.2
+
+### Added
+- Migration 016: worker health columns (`health_status`, `last_heartbeat_at`, `health_node` on digital_workers; `metrics`, `hosted_worker_ids`, `version` on nodes)
+- `DigitalWorker#health_status` validation against `HEALTH_STATUSES` (`online`, `offline`, `unknown`)
+- `DigitalWorker#online?` and `DigitalWorker#offline?` convenience methods
+- `Node#parsed_metrics` and `Node#parsed_hosted_worker_ids` JSON deserialization helpers
+
 ## v1.3.1
 
 ### Added
