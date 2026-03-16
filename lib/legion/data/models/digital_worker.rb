@@ -9,12 +9,14 @@ module Legion
         LIFECYCLE_STATES = %w[bootstrap active paused retired terminated].freeze
         CONSENT_TIERS    = %w[supervised consult notify autonomous].freeze
         RISK_TIERS       = %w[low medium high critical].freeze
+        HEALTH_STATUSES  = %w[online offline unknown].freeze
 
         def validate
           super
           errors.add(:lifecycle_state, 'invalid') unless LIFECYCLE_STATES.include?(lifecycle_state)
           errors.add(:consent_tier, 'invalid')    unless CONSENT_TIERS.include?(consent_tier)
           errors.add(:risk_tier, 'invalid')        if risk_tier && !RISK_TIERS.include?(risk_tier)
+          errors.add(:health_status, 'invalid')    if health_status && !HEALTH_STATUSES.include?(health_status)
         end
 
         def active?
@@ -27,6 +29,14 @@ module Legion
 
         def paused?
           lifecycle_state == 'paused'
+        end
+
+        def online?
+          health_status == 'online'
+        end
+
+        def offline?
+          health_status == 'offline'
         end
       end
     end
