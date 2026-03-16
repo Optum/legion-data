@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.3.1
+
+### Added
+- Migration 015: RBAC tables (rbac_role_assignments, rbac_runner_grants, rbac_cross_team_grants)
+- `Legion::Data::Model::RbacRoleAssignment` Sequel model with expiry and validation
+- `Legion::Data::Model::RbacRunnerGrant` Sequel model with actions_list helper
+- `Legion::Data::Model::RbacCrossTeamGrant` Sequel model with cross-team validation
+
 ## v1.3.0
 
 ### Added
