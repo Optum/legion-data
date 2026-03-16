@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, and settings.
+Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, and Apollo shared knowledge tables (PostgreSQL only). Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
 **License**: Apache-2.0
@@ -58,22 +58,28 @@ Legion::Data (singleton module)
 │       ├── 009_add_digital_workers
 │       ├── 010_add_value_metrics
 │       ├── 011_add_extensions_registry
-│       ├── 012_add_apollo_tables
-│       ├── 013_add_relationships
-│       └── 014_add_relationship_columns
+│       ├── 012_add_apollo_tables      # postgres-only: pgvector, uuid-ossp, 4 apollo tables
+│       ├── 013_add_relationships      # relationships table with trigger/action FK to functions
+│       └── 014_add_relationship_columns  # delay, chain_id, debug, conditions, transformation, active, allow_new_chains
 │
 ├── Model              # Sequel model loader
 │   └── Models/
-│       ├── Extension  # Installed LEX extensions
-│       ├── Function   # Available functions per extension
-│       ├── Runner     # Runner definitions (extension + function bindings)
-│       ├── Node       # Cluster node registry
-│       ├── Task       # Task instances
-│       ├── TaskLog    # Task execution logs
-│       ├── Setting    # Persistent settings store
-│       └── DigitalWorker  # Digital worker registry (AI-as-labor platform)
+│       ├── Extension      # Installed LEX extensions
+│       ├── Function       # Available functions per extension (with trigger/action relationship associations)
+│       ├── Runner         # Runner definitions (extension + function bindings)
+│       ├── Node           # Cluster node registry
+│       ├── Task           # Task instances (belongs_to Relationship, belongs_to DigitalWorker)
+│       ├── TaskLog        # Task execution logs
+│       ├── Setting        # Persistent settings store
+│       ├── DigitalWorker  # Digital worker registry (lifecycle: bootstrap/active/paused/retired/terminated)
+│       ├── Relationship   # Task trigger/action relationships between functions (migration 013/014)
+│       ├── ApolloEntry    # Apollo knowledge entries — postgres only (pgvector embedding, confidence lifecycle)
+│       ├── ApolloRelation # Weighted relations between Apollo entries — postgres only
+│       ├── ApolloExpertise  # Per-agent domain expertise tracking — postgres only
+│       └── ApolloAccessLog  # Apollo entry access audit log — postgres only
 │   Note: value_metrics table (migration 010) is accessed via raw Sequel dataset,
 │         not via a named Sequel::Model subclass.
+│   Note: Apollo models are guarded with `return unless adapter == :postgres` at load time.
 │
 ├── Settings           # Default DB config with per-adapter credential presets
 └── Version
@@ -97,7 +103,14 @@ Legion::Data (singleton module)
 {
   "adapter": "sqlite",
   "connected": false,
+  "dev_mode": false,
+  "dev_fallback": true,
+  "connect_on_start": true,
   "connection": {
+    "log": false,
+    "log_connection_info": false,
+    "log_warn_duration": 1,
+    "sql_log_level": "debug",
     "max_connections": 10,
     "preconnect": false
   },
@@ -105,10 +118,26 @@ Legion::Data (singleton module)
     "database": "legionio.db"
   },
   "migrations": {
-    "auto_migrate": true
+    "continue_on_fail": false,
+    "auto_migrate": true,
+    "ran": false,
+    "version": null
   },
   "models": {
+    "continue_on_load_fail": false,
     "autoload": true
+  },
+  "local": {
+    "enabled": true,
+    "database": "legionio_local.db",
+    "migrations": {
+      "auto_migrate": true
+    }
+  },
+  "cache": {
+    "connected": false,
+    "auto_enable": false,
+    "ttl": 60
   }
 }
 ```
@@ -136,9 +165,10 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 10 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 14 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
-| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker) |
+| `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
+| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog) |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |
@@ -150,6 +180,10 @@ Optional persistent storage initialized during `Legion::Service` startup (after 
 2. Task scheduling and logging
 3. Node cluster membership tracking
 4. Persistent settings storage
+5. Digital worker registry (AI-as-labor platform)
+6. Task relationship graph (trigger/action chains)
+7. Apollo shared knowledge store (PostgreSQL + pgvector only, used by lex-apollo)
+8. Local SQLite for agentic cognitive state (memory traces, trust scores, dream journals) — always on-node, independent of shared DB
 
 ---
 
