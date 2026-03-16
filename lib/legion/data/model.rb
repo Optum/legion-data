@@ -8,7 +8,7 @@ module Legion
 
         def models
           %w[extension function relationship task runner node setting digital_worker
-             apollo_entry apollo_relation apollo_expertise apollo_access_log]
+             apollo_entry apollo_relation apollo_expertise apollo_access_log audit_log]
         end
 
         def load

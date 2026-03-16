@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## v1.3.3
+
+### Added
+- Migration 017: `audit_log` table with SHA-256 hash chain columns (`record_hash`, `prev_hash`)
+- `Legion::Data::Model::AuditLog` immutable Sequel model with event type/status validation
+- Indexes on `event_type`, `principal_id`, and `created_at` for audit query performance
+
 ## v1.3.2
 
 ### Added
