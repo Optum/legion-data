@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## v1.2.2
+
+### Added
+- Migration 014: add missing columns to `relationships` table (`delay`, `chain_id`, `debug`, `allow_new_chains`, `conditions`, `transformation`, `active`) required by lex-tasker query helpers
+
 ## v1.2.1
 
 ### Added

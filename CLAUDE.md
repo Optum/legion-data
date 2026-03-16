@@ -34,7 +34,7 @@ Legion::Data (singleton module)
 │   ├── .sequel        # Raw Sequel::Database accessor
 │   └── .shutdown      # Close connection
 │
-├── Migration          # Auto-migration system (10 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (14 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -45,7 +45,11 @@ Legion::Data (singleton module)
 │       ├── 007_add_default_extensions
 │       ├── 008_add_tasks
 │       ├── 009_add_digital_workers
-│       └── 010_add_value_metrics
+│       ├── 010_add_value_metrics
+│       ├── 011_add_extensions_registry
+│       ├── 012_add_apollo_tables
+│       ├── 013_add_relationships
+│       └── 014_add_relationship_columns
 │
 ├── Model              # Sequel model loader
 │   └── Models/
