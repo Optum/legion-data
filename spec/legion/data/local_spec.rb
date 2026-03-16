@@ -1,0 +1,113 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+require 'fileutils'
+
+RSpec.describe Legion::Data::Local do
+  let(:test_db) { 'legionio_local_test.db' }
+
+  before(:each) do
+    described_class.reset!
+  end
+
+  after(:each) do
+    described_class.shutdown rescue nil
+    FileUtils.rm_f(test_db)
+  end
+
+  describe '.setup' do
+    it 'creates a SQLite connection' do
+      described_class.setup(database: test_db)
+      expect(described_class.connection).to be_a(Sequel::SQLite::Database)
+    end
+
+    it 'sets connected to true' do
+      described_class.setup(database: test_db)
+      expect(described_class.connected?).to be true
+    end
+
+    it 'is idempotent' do
+      described_class.setup(database: test_db)
+      conn1 = described_class.connection
+      described_class.setup(database: test_db)
+      expect(described_class.connection).to equal(conn1)
+    end
+  end
+
+  describe '.shutdown' do
+    it 'disconnects and clears state' do
+      described_class.setup(database: test_db)
+      described_class.shutdown
+      expect(described_class.connected?).to be false
+      expect(described_class.connection).to be_nil
+    end
+  end
+
+  describe '.db_path' do
+    it 'returns the configured database path' do
+      described_class.setup(database: test_db)
+      expect(described_class.db_path).to eq(test_db)
+    end
+  end
+
+  describe '.register_migrations' do
+    it 'accumulates migration directories' do
+      described_class.register_migrations(name: :memory, path: '/fake/path')
+      described_class.register_migrations(name: :trust, path: '/other/path')
+      expect(described_class.registered_migrations.size).to eq(2)
+    end
+
+    it 'prevents duplicate registration by name' do
+      described_class.register_migrations(name: :memory, path: '/fake/path')
+      described_class.register_migrations(name: :memory, path: '/fake/path')
+      expect(described_class.registered_migrations.size).to eq(1)
+    end
+  end
+
+  describe '.model' do
+    it 'creates a Sequel::Model bound to local connection' do
+      described_class.setup(database: test_db)
+      described_class.connection.create_table(:test_items) do
+        primary_key :id
+        String :name
+      end
+
+      model_class = described_class.model(:test_items)
+      model_class.create(name: 'hello')
+      expect(model_class.count).to eq(1)
+      expect(model_class.first.name).to eq('hello')
+    end
+
+    it 'raises when not connected' do
+      expect { described_class.model(:anything) }.to raise_error(RuntimeError, /not connected/)
+    end
+  end
+
+  describe 'migration registration and execution' do
+    let(:migrations_dir) { File.join(__dir__, 'local', 'test_migrations') }
+
+    before(:each) do
+      FileUtils.mkdir_p(migrations_dir)
+      File.write(File.join(migrations_dir, '20260316000001_create_test_table.rb'), <<~RUBY)
+        Sequel.migration do
+          change do
+            create_table(:local_test_table) do
+              primary_key :id
+              String :value
+            end
+          end
+        end
+      RUBY
+    end
+
+    after(:each) do
+      FileUtils.rm_rf(migrations_dir)
+    end
+
+    it 'runs registered migrations on setup' do
+      described_class.register_migrations(name: :test, path: migrations_dir)
+      described_class.setup(database: test_db)
+      expect(described_class.connection.table_exists?(:local_test_table)).to be true
+    end
+  end
+end

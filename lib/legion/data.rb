@@ -7,6 +7,7 @@ require 'sequel'
 require 'legion/data/connection'
 require 'legion/data/model'
 require 'legion/data/migration'
+require_relative 'data/local'
 
 module Legion
   module Data
@@ -16,6 +17,7 @@ module Legion
         migrate
         load_models
         setup_cache
+        setup_local
       end
 
       def connection_setup
@@ -34,6 +36,10 @@ module Legion
 
       def connection
         Legion::Data::Connection.sequel
+      end
+
+      def local
+        Legion::Data::Local
       end
 
       def setup_cache
@@ -55,7 +61,18 @@ module Legion
       end
 
       def shutdown
+        Legion::Data::Local.shutdown if defined?(Legion::Data::Local) && Legion::Data::Local.connected?
         Legion::Data::Connection.shutdown
+      end
+
+      private
+
+      def setup_local
+        return if Legion::Settings[:data].dig(:local, :enabled) == false
+
+        Legion::Data::Local.setup
+      rescue StandardError => e
+        Legion::Logging.warn "Legion::Data::Local failed to setup: #{e.message}" if defined?(Legion::Logging)
       end
     end
   end

@@ -24,15 +24,26 @@ Adapter is set via `Legion::Settings[:data][:adapter]`. All migrations use Seque
 
 ```
 Legion::Data (singleton module)
-├── .setup             # Connect, migrate, load models, setup cache
-├── .connection        # Sequel database handle
-├── .shutdown          # Close connection
+├── .setup             # Connect, migrate, load models, setup cache, setup local
+├── .connection        # Sequel database handle (shared/central)
+├── .local             # Legion::Data::Local accessor
+├── .shutdown          # Close both connections
 │
-├── Connection         # Sequel database connection management
+├── Connection         # Sequel database connection management (shared)
 │   ├── .adapter       # Reads from settings (sqlite, mysql2, postgres)
-│   ├── .setup         # Establish connection (SQLite uses file path, others use creds)
+│   ├── .setup         # Establish connection (dev_mode fallback to SQLite if network DB unreachable)
 │   ├── .sequel        # Raw Sequel::Database accessor
 │   └── .shutdown      # Close connection
+│
+├── Local              # Local SQLite database for agentic cognitive state
+│   ├── .setup         # Lazy init — creates legionio_local.db on first access
+│   ├── .connection    # Sequel::SQLite::Database handle
+│   ├── .connected?    # Whether local DB is active
+│   ├── .db_path       # Path to the local SQLite file
+│   ├── .model(:table) # Create Sequel::Model bound to local connection
+│   ├── .register_migrations(name:, path:) # Extensions register their migration dirs
+│   ├── .shutdown      # Close local connection
+│   └── .reset!        # Clear all state (testing)
 │
 ├── Migration          # Auto-migration system (14 migrations, Sequel DSL)
 │   └── migrations/
@@ -70,11 +81,14 @@ Legion::Data (singleton module)
 
 ### Key Design Patterns
 
+- **Two-Database Architecture**: Shared (MySQL/PG/SQLite) for control plane data + Local (always SQLite) for agentic cognitive state. Two files, always separate, no cross-database joins.
 - **Adapter-Driven**: `Connection.adapter` reads from settings; SQLite uses `Sequel.sqlite(path)`, others use `Sequel.connect`
-- **Cross-DB Migrations**: All migrations use Sequel DSL (no raw SQL), portable across SQLite/MySQL/PostgreSQL
+- **Dev Mode Fallback**: When `dev_mode: true` and network DB unreachable, shared connection falls back to SQLite (`legionio.db`) with warning log
+- **Cross-DB Migrations**: Shared migrations use IntegerMigrator (Sequel DSL), local migrations use TimestampMigrator (per-extension registration)
 - **Auto-Migration**: Runs Sequel migrations on startup (`auto_migrate: true` by default)
-- **Sequel ORM**: All models are `Sequel::Model` subclasses
+- **Sequel ORM**: Shared models are `Sequel::Model` subclasses (inherit global connection). Local models use `Legion::Data::Local.model(:table)` (explicit connection binding).
 - **Optional Caching**: `setup_cache` checks for `Legion::Cache` presence but Sequel model caching is currently disabled (code is commented out, pending implementation)
+- **Cryptographic Erasure**: Deleting `legionio_local.db` is a hard guarantee — no residual data. Used by `lex-privatecore`.
 - **CLI Executable**: Ships with `legionio_migrate` executable in `exe/` for running database migrations standalone
 
 ## Default Settings

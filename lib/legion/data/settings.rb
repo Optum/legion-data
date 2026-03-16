@@ -32,7 +32,18 @@ module Legion
           creds:            creds,
           migrations:       migrations,
           models:           models,
+          local:            local,
+          dev_mode:         false,
+          dev_fallback:     true,
           connect_on_start: true
+        }
+      end
+
+      def self.local
+        {
+          enabled:    true,
+          database:   'legionio_local.db',
+          migrations: { auto_migrate: true }
         }
       end
 

@@ -18,7 +18,17 @@ module Legion
           @sequel = if adapter == :sqlite
                       ::Sequel.sqlite(sqlite_path)
                     else
-                      ::Sequel.connect(adapter: adapter, **creds_builder)
+                      begin
+                        ::Sequel.connect(adapter: adapter, **creds_builder)
+                      rescue StandardError => e
+                        raise unless dev_fallback?
+
+                        Legion::Logging.warn(
+                          "Shared DB unreachable (#{e.message}), dev_mode fallback to SQLite"
+                        ) if defined?(Legion::Logging)
+                        @adapter = :sqlite
+                        ::Sequel.sqlite(sqlite_path)
+                      end
                     end
           Legion::Settings[:data][:connected] = true
           configure_logging
@@ -45,6 +55,11 @@ module Legion
         end
 
         private
+
+        def dev_fallback?
+          data_settings = Legion::Settings[:data]
+          data_settings[:dev_mode] == true && data_settings[:dev_fallback] != false
+        end
 
         def sqlite_path
           Legion::Settings[:data][:creds][:database] || 'legionio.db'
