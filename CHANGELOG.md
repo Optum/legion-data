@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## v1.3.6
+
+### Added
+- Migration 019: adds `record_hash`, `previous_hash`, `retention_tier` columns to `audit_log`
+
 ## v1.3.5
 
 ### Added
