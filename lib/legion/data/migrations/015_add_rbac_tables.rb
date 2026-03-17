@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    create_table(:rbac_role_assignments) do
+    create_table?(:rbac_role_assignments) do
       primary_key :id
       String :principal_type, null: false, size: 10
       String :principal_id,   null: false, size: 255
@@ -16,7 +16,7 @@ Sequel.migration do
       index :team
     end
 
-    create_table(:rbac_runner_grants) do
+    create_table?(:rbac_runner_grants) do
       primary_key :id
       String :team,            null: false, size: 255
       String :runner_pattern,  null: false, size: 500
@@ -27,7 +27,7 @@ Sequel.migration do
       index :team
     end
 
-    create_table(:rbac_cross_team_grants) do
+    create_table?(:rbac_cross_team_grants) do
       primary_key :id
       String :source_team,     null: false, size: 255
       String :target_team,     null: false, size: 255

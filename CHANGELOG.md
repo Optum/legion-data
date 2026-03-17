@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## v1.4.2
+
+### Fixed
+- Migration 015: use `create_table?` instead of `create_table` for idempotent RBAC table creation
+
 ## v1.4.1
 
 ### Added
