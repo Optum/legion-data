@@ -1,5 +1,14 @@
 # Legion::Data Changelog
 
+## v1.4.0
+
+### Added
+- `Legion::Data::Vector`: reusable pgvector helpers (available?, cosine_search, l2_search, ensure_extension!)
+- `Legion::Data::StorageTiers`: hot/warm/cold archival lifecycle (archive_to_warm, export_to_cold, stats)
+- Migration 022: memory_traces table with optional pgvector embedding column (1536-dim, HNSW index)
+- Migration 023: data_archive table for generic storage tier archival
+- Migration 024: tenant_id partition columns on tasks, digital_workers, audit_log, memory_traces
+
 ## v1.3.8
 
 ### Added
