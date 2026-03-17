@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.3.8
+
+### Added
+- `Legion::Data::Archival`: hot/warm/cold archival pipeline for tasks and metering records
+- `Legion::Data::Archival::Policy`: configurable retention policies (warm_after_days, cold_after_days, batch_size)
+- Archive, restore, and cross-table search operations with dry-run support
+- Migration 021: archive tables for tasks and metering_records
+
 ## v1.3.7
 
 ### Added
