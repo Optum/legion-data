@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.3.7
+
+### Added
+- Migration 020: `webhooks`, `webhook_deliveries`, `webhook_dead_letters` tables
+
+### Fixed
+- Migration 019: guard against duplicate column adds when `record_hash` already exists from migration 017
+
 ## v1.3.6
 
 ### Added
