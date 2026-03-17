@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## v1.4.1
+
+### Added
+- Migration 025: tenants table (tenant_id, name, status, quotas, token limits)
+
 ## v1.4.0
 
 ### Added
