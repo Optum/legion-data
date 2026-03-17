@@ -169,6 +169,9 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog) |
+| `lib/legion/data/encryption/cipher.rb` | AES-256-GCM encrypt/decrypt with versioned binary format and AAD |
+| `lib/legion/data/encryption/key_provider.rb` | Vault-backed key derivation with per-tenant scope and local fallback |
+| `lib/legion/data/encryption/sequel_plugin.rb` | Transparent `encrypted_column` DSL for Sequel models |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |

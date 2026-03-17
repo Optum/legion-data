@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.3.4
+
+### Added
+- `Legion::Data::Encryption::Cipher`: AES-256-GCM with versioned binary format, random IV, and AAD
+- `Legion::Data::Encryption::KeyProvider`: Vault-backed key derivation with local fallback for dev mode
+- `Legion::Data::Encryption::SequelPlugin`: transparent `encrypted_column` DSL for Sequel models
+- Per-tenant key scope support for cryptographic erasure compliance
+
 ## v1.3.3
 
 ### Added
