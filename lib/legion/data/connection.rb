@@ -23,9 +23,11 @@ module Legion
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        Legion::Logging.warn(
-                          "Shared DB unreachable (#{e.message}), dev_mode fallback to SQLite"
-                        ) if defined?(Legion::Logging)
+                        if defined?(Legion::Logging)
+                          Legion::Logging.warn(
+                            "Shared DB unreachable (#{e.message}), dev_mode fallback to SQLite"
+                          )
+                        end
                         @adapter = :sqlite
                         ::Sequel.sqlite(sqlite_path)
                       end

@@ -11,7 +11,11 @@ RSpec.describe Legion::Data::Local do
   end
 
   after(:each) do
-    described_class.shutdown rescue nil
+    begin
+      described_class.shutdown
+    rescue StandardError
+      nil
+    end
     FileUtils.rm_f(test_db)
   end
 

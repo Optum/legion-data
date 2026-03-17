@@ -7,7 +7,7 @@ module Legion
   module Data
     module Local
       class << self
-        attr_reader :connection
+        attr_reader :connection, :db_path
 
         def setup(database: nil, **)
           return if @connected
@@ -28,10 +28,6 @@ module Legion
 
         def connected?
           @connected == true
-        end
-
-        def db_path
-          @db_path
         end
 
         def register_migrations(name:, path:)

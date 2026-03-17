@@ -22,7 +22,11 @@ RSpec.describe Legion::Data::Connection do
     end
 
     after(:each) do
-      described_class.shutdown rescue nil
+      begin
+        described_class.shutdown
+      rescue StandardError
+        nil
+      end
       described_class.instance_variable_set(:@adapter, @saved_ivar_adapter)
       described_class.instance_variable_set(:@sequel, @saved_ivar_sequel)
       Legion::Settings[:data][:adapter] = @saved_adapter
@@ -39,7 +43,7 @@ RSpec.describe Legion::Data::Connection do
         Legion::Settings[:data][:dev_mode] = true
         Legion::Settings[:data][:dev_fallback] = true
         Legion::Settings[:data][:creds] = { database: test_db }
-        allow(::Sequel).to receive(:connect).and_wrap_original do |original, *args, **kwargs|
+        allow(Sequel).to receive(:connect).and_wrap_original do |original, *args, **kwargs|
           raise Sequel::DatabaseConnectionError, 'connection refused' if kwargs[:adapter] == :mysql2
 
           original.call(*args, **kwargs)
@@ -58,7 +62,7 @@ RSpec.describe Legion::Data::Connection do
         Legion::Settings[:data][:adapter] = 'mysql2'
         Legion::Settings[:data][:dev_mode] = false
         Legion::Settings[:data][:creds] = { database: test_db }
-        allow(::Sequel).to receive(:connect).and_raise(Sequel::DatabaseConnectionError, 'connection refused')
+        allow(Sequel).to receive(:connect).and_raise(Sequel::DatabaseConnectionError, 'connection refused')
       end
 
       it 'raises the connection error' do
@@ -72,7 +76,7 @@ RSpec.describe Legion::Data::Connection do
         Legion::Settings[:data][:dev_mode] = true
         Legion::Settings[:data][:dev_fallback] = false
         Legion::Settings[:data][:creds] = { database: test_db }
-        allow(::Sequel).to receive(:connect).and_raise(Sequel::DatabaseConnectionError, 'connection refused')
+        allow(Sequel).to receive(:connect).and_raise(Sequel::DatabaseConnectionError, 'connection refused')
       end
 
       it 'raises the connection error' do
