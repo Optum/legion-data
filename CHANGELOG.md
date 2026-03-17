@@ -1,5 +1,15 @@
 # Legion::Data Changelog
 
+## v1.3.5
+
+### Added
+- `Legion::Data::EventStore`: append-only governance event store with stream semantics
+- Hash chain integrity verification for tamper detection
+- `EventStore::Projection` base class with `build_from` stream replay
+- `ConsentState` projection: rebuild consent state from event history
+- `GovernanceTimeline` projection: chronological governance event timeline
+- Migration 018: governance_events table with stream/sequence indexing
+
 ## v1.3.4
 
 ### Added

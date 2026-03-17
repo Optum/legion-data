@@ -60,7 +60,11 @@ Legion::Data (singleton module)
 │       ├── 011_add_extensions_registry
 │       ├── 012_add_apollo_tables      # postgres-only: pgvector, uuid-ossp, 4 apollo tables
 │       ├── 013_add_relationships      # relationships table with trigger/action FK to functions
-│       └── 014_add_relationship_columns  # delay, chain_id, debug, conditions, transformation, active, allow_new_chains
+│       ├── 014_add_relationship_columns  # delay, chain_id, debug, conditions, transformation, active, allow_new_chains
+│       ├── 015_add_rbac_tables
+│       ├── 016_add_worker_health
+│       ├── 017_add_audit_log
+│       └── 018_add_governance_events    # append-only event store with hash chain
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -172,6 +176,8 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/encryption/cipher.rb` | AES-256-GCM encrypt/decrypt with versioned binary format and AAD |
 | `lib/legion/data/encryption/key_provider.rb` | Vault-backed key derivation with per-tenant scope and local fallback |
 | `lib/legion/data/encryption/sequel_plugin.rb` | Transparent `encrypted_column` DSL for Sequel models |
+| `lib/legion/data/event_store.rb` | Append-only governance event store with hash chain integrity |
+| `lib/legion/data/event_store/projection.rb` | Projection base class, ConsentState, GovernanceTimeline |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |
