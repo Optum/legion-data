@@ -8,6 +8,7 @@ require 'legion/data/connection'
 require 'legion/data/model'
 require 'legion/data/migration'
 require_relative 'data/local'
+require_relative 'data/spool'
 
 module Legion
   module Data

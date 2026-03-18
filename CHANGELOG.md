@@ -1,5 +1,15 @@
 # Legion::Data Changelog
 
+## [Unreleased]
+
+### Added
+- `Legion::Data::Spool`: filesystem-based event buffer at `~/.legionio/data/spool/`
+
+## v1.4.3
+
+### Added
+- `Legion::Data::Spool`: filesystem-based event buffer at `~/.legionio/data/spool/`
+
 ## v1.4.2
 
 ### Fixed
