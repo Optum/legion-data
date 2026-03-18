@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, and Apollo shared knowledge tables (PostgreSQL only). Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
+Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
 **License**: Apache-2.0
@@ -45,7 +45,7 @@ Legion::Data (singleton module)
 │   ├── .shutdown      # Close local connection
 │   └── .reset!        # Clear all state (testing)
 │
-├── Migration          # Auto-migration system (14 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (25 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -64,7 +64,14 @@ Legion::Data (singleton module)
 │       ├── 015_add_rbac_tables
 │       ├── 016_add_worker_health
 │       ├── 017_add_audit_log
-│       └── 018_add_governance_events    # append-only event store with hash chain
+│       ├── 018_add_governance_events    # append-only event store with hash chain
+│       ├── 019_add_audit_hash_chain
+│       ├── 020_add_webhooks
+│       ├── 021_add_archive_tables
+│       ├── 022_add_memory_traces
+│       ├── 023_add_data_archive
+│       ├── 024_add_tenant_partition_columns
+│       └── 025_add_tenants_table
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -80,7 +87,11 @@ Legion::Data (singleton module)
 │       ├── ApolloEntry    # Apollo knowledge entries — postgres only (pgvector embedding, confidence lifecycle)
 │       ├── ApolloRelation # Weighted relations between Apollo entries — postgres only
 │       ├── ApolloExpertise  # Per-agent domain expertise tracking — postgres only
-│       └── ApolloAccessLog  # Apollo entry access audit log — postgres only
+│       ├── ApolloAccessLog  # Apollo entry access audit log — postgres only
+│       ├── AuditLog       # Audit trail entries (AMQP + query layer)
+│       ├── RbacRoleAssignment  # RBAC principal -> role mappings
+│       ├── RbacRunnerGrant     # RBAC per-runner permission grants
+│       └── RbacCrossTeamGrant  # RBAC cross-team access grants
 │   Note: value_metrics table (migration 010) is accessed via raw Sequel dataset,
 │         not via a named Sequel::Model subclass.
 │   Note: Apollo models are guarded with `return unless adapter == :postgres` at load time.
@@ -169,10 +180,10 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 14 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 25 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
-| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog) |
+| `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog, AuditLog, RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant) |
 | `lib/legion/data/encryption/cipher.rb` | AES-256-GCM encrypt/decrypt with versioned binary format and AAD |
 | `lib/legion/data/encryption/key_provider.rb` | Vault-backed key derivation with per-tenant scope and local fallback |
 | `lib/legion/data/encryption/sequel_plugin.rb` | Transparent `encrypted_column` DSL for Sequel models |
@@ -193,6 +204,11 @@ Optional persistent storage initialized during `Legion::Service` startup (after 
 6. Task relationship graph (trigger/action chains)
 7. Apollo shared knowledge store (PostgreSQL + pgvector only, used by lex-apollo)
 8. Local SQLite for agentic cognitive state (memory traces, trust scores, dream journals) — always on-node, independent of shared DB
+9. RBAC assignment tables (migrations 015 — role assignments, runner grants, cross-team grants)
+10. Audit log with tamper-evident hash chain (migrations 017, 019)
+11. Governance event store with append-only integrity (migration 018)
+12. Webhook subscription storage (migration 020)
+13. Archive, memory traces, and tenant partition tables (migrations 021–025)
 
 ---
 
