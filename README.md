@@ -2,7 +2,7 @@
 
 Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, and Apollo shared knowledge tables.
 
-Version: 1.3.0
+**Version**: 1.4.3
 
 ## Supported Databases
 
@@ -154,6 +154,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
 
 Set `enabled: false` to disable local SQLite entirely.
+
+### Spool (Filesystem Buffer)
+
+`Legion::Data::Spool` provides a filesystem-backed write buffer for extensions. When the database is unavailable, task data can be written to `~/.legionio/data/spool/` and replayed once the connection is restored.
+
+```ruby
+spool = Legion::Data::Spool.for(Legion::Extensions::MyLex)
+spool.write({ task_id: SecureRandom.uuid, data: payload })
+spool.drain { |entry| process(entry) }
+```
 
 ### Dev Mode Fallback
 
