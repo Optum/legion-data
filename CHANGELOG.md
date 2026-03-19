@@ -1,9 +1,11 @@
 # Legion::Data Changelog
 
-## [Unreleased]
+## v1.4.4
 
 ### Added
-- `Legion::Data::Spool`: filesystem-based event buffer at `~/.legionio/data/spool/`
+- Migration 026: `description` (TEXT) and `embedding` (TEXT, JSON-serialized vector) columns on `functions` table
+- Postgres-only: `embedding_vector vector(1536)` column with HNSW cosine index for semantic similarity search
+- `Function#embedding_vector` / `Function#embedding_vector=` helper methods for JSON serialization
 
 ## v1.4.3
 
