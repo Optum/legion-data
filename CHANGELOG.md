@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## v1.4.6
+
+### Added
+- Migration 028: agent_cluster_nodes table (stub for agent cluster support)
+- Migration 029: agent_cluster_tasks table (stub for agent cluster task tracking)
+- Migration 030: approval_queue table for governance board with status, requester, reviewer, and tenant filtering
+
 ## v1.4.5
 
 ### Added
