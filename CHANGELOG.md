@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## v1.4.8
+
+### Fixed
+- Migration 033: adds `task_delay` column (Integer, nullable) to tasks table to resolve `PG::UndefinedColumn` error when lex-tasker queries `tasks.task_delay`
+
 ## v1.4.7
 
 ### Added
