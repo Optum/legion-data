@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## v1.4.5
+
+### Added
+- Migration 027: add `source_provider` column to `apollo_entries` (postgres-only)
+  Tracks the LLM provider or data origin of each knowledge entry for source diversity
+  enforcement in Apollo corroboration
+
 ## v1.4.4
 
 ### Added
