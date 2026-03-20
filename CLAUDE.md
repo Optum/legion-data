@@ -8,7 +8,7 @@
 Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
-**Version**: 1.4.3
+**Version**: 1.4.4
 **License**: Apache-2.0
 
 ## Supported Databases
@@ -72,7 +72,8 @@ Legion::Data (singleton module)
 │       ├── 022_add_memory_traces
 │       ├── 023_add_data_archive
 │       ├── 024_add_tenant_partition_columns
-│       └── 025_add_tenants_table
+│       ├── 025_add_tenants_table
+│       └── 026_add_function_embeddings  # description + embedding (TEXT) on functions; postgres: embedding_vector vector(1536) with HNSW cosine index
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -190,6 +191,10 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/encryption/sequel_plugin.rb` | Transparent `encrypted_column` DSL for Sequel models |
 | `lib/legion/data/event_store.rb` | Append-only governance event store with hash chain integrity |
 | `lib/legion/data/event_store/projection.rb` | Projection base class, ConsentState, GovernanceTimeline |
+| `lib/legion/data/vector.rb` | Reusable pgvector helpers: `available?`, `cosine_search`, `l2_search`, `ensure_extension!` |
+| `lib/legion/data/storage_tiers.rb` | Hot/warm/cold archival lifecycle: `archive_to_warm`, `export_to_cold`, `stats` |
+| `lib/legion/data/archival.rb` | Archival module entry point and configuration |
+| `lib/legion/data/archival/` | Archival strategy implementations |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |
@@ -210,6 +215,7 @@ Optional persistent storage initialized during `Legion::Service` startup (after 
 11. Governance event store with append-only integrity (migration 018)
 12. Webhook subscription storage (migration 020)
 13. Archive, memory traces, and tenant partition tables (migrations 021–025)
+14. Function embeddings for semantic runner discovery (migration 026 — description + vector columns on functions table)
 
 ---
 

@@ -2,7 +2,7 @@
 
 Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, and Apollo shared knowledge tables.
 
-**Version**: 1.4.3
+**Version**: 1.4.4
 
 ## Supported Databases
 
@@ -49,6 +49,8 @@ gem 'legion-data'
 | `ApolloAccessLog` | `apollo_access_log` | Apollo entry access audit log (PostgreSQL only) |
 
 Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
+
+Migration 026 adds `description` (TEXT) and `embedding` (TEXT, JSON-serialized vector) columns to the `functions` table, plus a `embedding_vector vector(1536)` column with HNSW cosine index on PostgreSQL for semantic similarity search of runner functions.
 
 ## Usage
 
