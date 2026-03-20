@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## v1.4.7
+
+### Added
+- Migration 031: adds `depth` column (Integer, default 0) to tasks table for sub-agent recursion tracking
+- Migration 032: adds `cancelled_at` column (DateTime, nullable) to tasks table for cancellation support
+- `cancelled?` predicate method on Task model
+
 ## v1.4.6
 
 ### Added

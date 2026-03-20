@@ -10,6 +10,10 @@ module Legion
         one_to_many :children, key: :parent_id, class: self
         many_to_one :master, class: self
         one_to_many :slave, key: :master_id, class: self
+
+        def cancelled?
+          !cancelled_at.nil?
+        end
       end
     end
   end
