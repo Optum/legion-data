@@ -9,7 +9,8 @@ module Legion
           return false unless Legion::Data.connection.adapter_scheme == :postgres
 
           Legion::Data.connection.fetch("SELECT 1 FROM pg_extension WHERE extname = 'vector'").any?
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("Vector#available? check failed: #{e.message}") if defined?(Legion::Logging)
           false
         end
 

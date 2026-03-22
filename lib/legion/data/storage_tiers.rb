@@ -58,7 +58,8 @@ module Legion
 
         def count_tier(tier)
           Legion::Data.connection[:data_archive].where(tier: TIERS[tier]).count
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("StorageTiers#count_tier failed for #{tier}: #{e.message}") if defined?(Legion::Logging)
           0
         end
       end

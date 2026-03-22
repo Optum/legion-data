@@ -85,7 +85,8 @@ module Legion
 
         def db_ready?(table)
           defined?(Legion::Data) && Legion::Data.connection&.table_exists?(table)
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("Archival#db_ready? check failed for #{table}: #{e.message}") if defined?(Legion::Logging)
           false
         end
       end

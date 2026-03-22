@@ -135,7 +135,8 @@ module Legion
           SQL
 
           Legion::Data.connection.fetch(sql).map { |row| row[:name] }
-        rescue StandardError
+        rescue StandardError => e
+          log_warn("partition_names_for #{table} failed: #{e.message}") if logging?
           []
         end
 

@@ -17,7 +17,8 @@ module Legion
           return nil unless detail
 
           Legion::JSON.load(detail)
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.warn("AuditLog#parsed_detail JSON parse failed: #{e.message}") if defined?(Legion::Logging)
           nil
         end
 

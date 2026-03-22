@@ -10,7 +10,8 @@ module Legion
           return nil unless metrics
 
           Legion::JSON.load(metrics)
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("Node#parsed_metrics JSON parse failed: #{e.message}") if defined?(Legion::Logging)
           nil
         end
 
@@ -18,7 +19,8 @@ module Legion
           return [] unless hosted_worker_ids
 
           Legion::JSON.load(hosted_worker_ids)
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("Node#parsed_hosted_worker_ids JSON parse failed: #{e.message}") if defined?(Legion::Logging)
           []
         end
       end

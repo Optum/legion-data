@@ -110,7 +110,8 @@ module Legion
 
         def db_ready?
           defined?(Legion::Data) && Legion::Data.connection&.table_exists?(:governance_events)
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("EventStore#db_ready? check failed: #{e.message}") if defined?(Legion::Logging)
           false
         end
       end

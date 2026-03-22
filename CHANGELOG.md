@@ -1,5 +1,20 @@
 # Legion::Data Changelog
 
+## [1.4.15] - 2026-03-22
+
+### Changed
+- Added `Legion::Logging` calls (guarded with `defined?`) to all previously silent rescue blocks
+- `archival/policy.rb`: warn log on `Policy.from_settings` failure
+- `archival.rb`: debug log on `db_ready?` failure
+- `connection.rb`: debug log on `data_tls_settings` failure
+- `event_store.rb`: debug log on `db_ready?` failure
+- `models/audit_log.rb`: warn log on `parsed_detail` JSON parse failure
+- `models/function.rb`: debug log on `embedding_vector` JSON parse failure
+- `models/node.rb`: debug log on `parsed_metrics` and `parsed_hosted_worker_ids` JSON parse failures
+- `partition_manager.rb`: warn log (via `log_warn`) on `partition_names_for` failure
+- `storage_tiers.rb`: debug log on `count_tier` failure
+- `vector.rb`: debug log on `available?` check failure
+
 ## [1.4.14] - 2026-03-22
 
 ### Changed

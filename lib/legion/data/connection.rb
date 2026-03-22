@@ -134,7 +134,8 @@ module Legion
           return {} unless defined?(Legion::Settings)
 
           Legion::Settings[:data][:tls] || {}
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.debug("Connection#data_tls_settings failed: #{e.message}") if defined?(Legion::Logging)
           {}
         end
 

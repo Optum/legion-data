@@ -12,7 +12,8 @@ module Legion
           return nil unless embedding
 
           ::JSON.parse(embedding)
-        rescue ::JSON::ParserError
+        rescue ::JSON::ParserError => e
+          Legion::Logging.debug("Function#embedding_vector JSON parse failed: #{e.message}") if defined?(Legion::Logging)
           nil
         end
 

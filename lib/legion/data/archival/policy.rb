@@ -37,7 +37,8 @@ module Legion
           return new unless archival.is_a?(Hash)
 
           new(**archival.slice(:warm_after_days, :cold_after_days, :batch_size, :tables))
-        rescue StandardError
+        rescue StandardError => e
+          Legion::Logging.warn("Policy.from_settings failed: #{e.message}") if defined?(Legion::Logging)
           new
         end
       end
