@@ -49,3 +49,9 @@ Style/FrozenStringLiteralComment:
 
 Naming/FileName:
   Enabled: false
+
+Naming/VariableNumber:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Max: 8

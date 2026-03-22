@@ -34,11 +34,43 @@ module Legion
                     end
           Legion::Settings[:data][:connected] = true
           configure_logging
+          connect_with_replicas
         end
 
         def shutdown
           @sequel&.disconnect
           Legion::Settings[:data][:connected] = false
+        end
+
+        def connect_with_replicas
+          return unless adapter == :postgres
+
+          replica_url  = Legion::Settings[:data][:read_replica_url]
+          replica_list = Array(Legion::Settings[:data][:replicas]).dup
+
+          replica_list.prepend(replica_url) if replica_url && !replica_url.empty?
+          replica_list.uniq!
+          replica_list.compact!
+
+          return if replica_list.empty?
+
+          @sequel.extension(:server_block)
+
+          replica_list.each_with_index do |url, idx|
+            @sequel.add_servers("read_#{idx}": url)
+          end
+
+          @replica_servers = replica_list.each_with_index.map { |_, idx| :"read_#{idx}" }
+        end
+
+        def read_server
+          return :default if @replica_servers.nil? || @replica_servers.empty?
+
+          :read_0
+        end
+
+        def replica_servers
+          @replica_servers || []
         end
 
         def merge_tls_creds(creds, adapter:, port:)

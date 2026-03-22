@@ -1,5 +1,15 @@
 # Legion::Data Changelog
 
+## v1.4.11
+
+### Added
+- Read replica support: `read_replica_url` and `replicas` settings, `Connection.connect_with_replicas` via Sequel `server_block` extension, `read_server` and `replica_servers` class methods for read/write splitting
+- `PartitionManager`: PostgreSQL range partitioning helper — `ensure_partitions`, `drop_old_partitions`, `list_partitions` for monthly table partitioning
+- `Archiver`: cold storage archival pipeline — batch export to JSONL+gzip, SHA-256 manifest, pluggable upload backends (S3, Azure, local tmpdir)
+- Migration 034: `archive_manifest` table (PostgreSQL only) for tracking archived batches
+- Archival settings: `retention_days`, `batch_size`, `storage_backend` defaults
+- 58 new specs (257 total, 0 failures)
+
 ## v1.4.10
 
 ### Added

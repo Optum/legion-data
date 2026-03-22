@@ -9,6 +9,8 @@ require 'legion/data/model'
 require 'legion/data/migration'
 require_relative 'data/local'
 require_relative 'data/spool'
+require_relative 'data/partition_manager'
+require_relative 'data/archiver'
 
 module Legion
   module Data

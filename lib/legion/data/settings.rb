@@ -35,7 +35,10 @@ module Legion
           local:            local,
           dev_mode:         false,
           dev_fallback:     true,
-          connect_on_start: true
+          connect_on_start: true,
+          read_replica_url: nil,
+          replicas:         [],
+          archival:         archival
         }
       end
 
@@ -77,6 +80,14 @@ module Legion
       def self.creds(adapter = nil)
         adapter = (adapter || :sqlite).to_sym
         CREDS.fetch(adapter, CREDS[:sqlite]).dup
+      end
+
+      def self.archival
+        {
+          retention_days:  90,
+          batch_size:      1000,
+          storage_backend: nil
+        }
       end
 
       def self.cache
