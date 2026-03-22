@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## v1.4.10
+
+### Added
+- TLS support for PostgreSQL connections: `sslmode`, `sslrootcert`, `sslcert`, `sslkey`
+- TLS support for MySQL connections: `ssl_mode`, `sslca`, `sslcert`, `sslkey`
+- `Connection.merge_tls_creds` resolves TLS config via `Legion::Crypt::TLS.resolve`
+- SQLite connections skip TLS entirely (local file, no network)
+
 ## v1.4.8
 
 ### Fixed
