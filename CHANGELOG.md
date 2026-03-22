@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## [1.4.12] - 2026-03-21
+
+### Added
+- Migration 035: apollo_entries source_channel column (postgres-only)
+- Migration 036: audit_log context_snapshot column
+- Migration 037: apollo_entries knowledge_domain column with index (postgres-only)
+
 ## v1.4.11
 
 ### Added
