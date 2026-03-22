@@ -26,8 +26,8 @@ Gem::Specification.new do |spec|
     'rubygems_mfa_required' => 'true'
   }
 
-  spec.add_dependency 'legion-logging'
-  spec.add_dependency 'legion-settings'
+  spec.add_dependency 'legion-logging', '>= 1.2.8'
+  spec.add_dependency 'legion-settings', '>= 1.3.12'
   spec.add_dependency 'sequel', '>= 5.70'
   spec.add_dependency 'sqlite3', '>= 2.0'
 end

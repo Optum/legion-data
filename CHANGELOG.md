@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.4.16] - 2026-03-22
+
+### Changed
+- Add version constraints to gemspec dependencies: `legion-logging >= 1.2.8`, `legion-settings >= 1.3.12`
+
 ## [1.4.15] - 2026-03-22
 
 ### Changed
