@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.4.14] - 2026-03-22
+
+### Changed
+- Boot connection log for non-SQLite adapters now includes username: `adapter://user@host:port/db`
+
 ## [1.4.13] - 2026-03-22
 
 ### Added

@@ -38,7 +38,11 @@ module Legion
               Legion::Logging.info "Connected to SQLite at #{sqlite_path}"
             else
               creds = Legion::Data::Settings.creds(adapter)
-              Legion::Logging.info "Connected to #{adapter}://#{creds[:host]}:#{creds[:port]}/#{creds[:database] || creds[:db]}"
+              user = creds[:user] || creds[:username] || 'unknown'
+              host = creds[:host] || '127.0.0.1'
+              port = creds[:port]
+              db   = creds[:database] || creds[:db]
+              Legion::Logging.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
             end
           end
           configure_logging
