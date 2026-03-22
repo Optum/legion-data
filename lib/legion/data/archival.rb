@@ -18,6 +18,7 @@ module Legion
             archive_table = ARCHIVE_TABLE_MAP[table]
             next unless archive_table && db_ready?(table) && db_ready?(archive_table)
 
+            Legion::Logging.info "Archiving #{table} -> #{archive_table} (cutoff: #{policy.warm_cutoff}, dry_run: #{dry_run})" if defined?(Legion::Logging)
             count = archive_table!(
               source: table, destination: archive_table,
               cutoff: policy.warm_cutoff, batch_size: policy.batch_size, dry_run: dry_run
@@ -45,6 +46,7 @@ module Legion
             end
             conn[archive_table].where(original_id: ids).delete
           end
+          Legion::Logging.info "Restored #{restored} row(s) from #{archive_table} -> #{source_table}" if defined?(Legion::Logging)
           restored
         end
 

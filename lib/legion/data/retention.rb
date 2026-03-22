@@ -26,6 +26,7 @@ module Legion
             end
           end
 
+          Legion::Logging.info "Archived #{count} row(s) from #{table}" if defined?(Legion::Logging) && count.positive?
           { archived: count, table: table }
         end
 
@@ -38,6 +39,7 @@ module Legion
           expired = db[archive_table].where(Sequel.lit("#{date_column} < ?", cutoff))
           count = expired.count
           expired.delete if count.positive?
+          Legion::Logging.info "Purged #{count} expired row(s) from #{archive_table}" if defined?(Legion::Logging) && count.positive?
 
           { purged: count, table: table }
         end

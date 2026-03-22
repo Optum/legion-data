@@ -24,10 +24,12 @@ module Legion
 
         def derive_key(tenant_id)
           if tenant_id && crypt_available?
+            Legion::Logging.debug "Deriving Vault key for tenant #{tenant_id}" if defined?(Legion::Logging)
             Legion::Crypt::PartitionKeys.derive(tenant_id: tenant_id)
           elsif crypt_available?
             Legion::Crypt.default_encryption_key
           else
+            Legion::Logging.warn 'Legion::Crypt unavailable, falling back to dev encryption key' if defined?(Legion::Logging)
             local_key
           end
         end

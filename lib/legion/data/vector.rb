@@ -17,6 +17,7 @@ module Legion
           return false unless Legion::Data.connection&.adapter_scheme == :postgres
 
           Legion::Data.connection.run('CREATE EXTENSION IF NOT EXISTS vector')
+          Legion::Logging.info 'pgvector extension enabled' if defined?(Legion::Logging)
           true
         rescue StandardError => e
           Legion::Logging.warn("pgvector extension creation failed: #{e.message}") if defined?(Legion::Logging)
@@ -26,6 +27,7 @@ module Legion
         def cosine_search(table:, column:, query_vector:, limit: 10, min_similarity: 0.0)
           return [] unless available?
 
+          Legion::Logging.debug "Vector cosine_search: table=#{table} column=#{column} limit=#{limit}" if defined?(Legion::Logging)
           vec_literal = vector_literal(query_vector)
           ds = Legion::Data.connection[table]
                            .select_all
@@ -40,6 +42,7 @@ module Legion
         def l2_search(table:, column:, query_vector:, limit: 10)
           return [] unless available?
 
+          Legion::Logging.debug "Vector l2_search: table=#{table} column=#{column} limit=#{limit}" if defined?(Legion::Logging)
           vec_literal = vector_literal(query_vector)
           Legion::Data.connection[table]
                       .select_all

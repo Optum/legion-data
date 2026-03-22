@@ -33,6 +33,14 @@ module Legion
                       end
                     end
           Legion::Settings[:data][:connected] = true
+          if defined?(Legion::Logging)
+            if adapter == :sqlite
+              Legion::Logging.info "Connected to SQLite at #{sqlite_path}"
+            else
+              creds = Legion::Data::Settings.creds(adapter)
+              Legion::Logging.info "Connected to #{adapter}://#{creds[:host]}:#{creds[:port]}/#{creds[:database] || creds[:db]}"
+            end
+          end
           configure_logging
           connect_with_replicas
         end
@@ -40,6 +48,7 @@ module Legion
         def shutdown
           @sequel&.disconnect
           Legion::Settings[:data][:connected] = false
+          Legion::Logging.info 'Legion::Data connection closed' if defined?(Legion::Logging)
         end
 
         def connect_with_replicas
@@ -61,6 +70,7 @@ module Legion
           end
 
           @replica_servers = replica_list.each_with_index.map { |_, idx| :"read_#{idx}" }
+          Legion::Logging.debug "Registered #{@replica_servers.size} read replica(s)" if defined?(Legion::Logging)
         end
 
         def read_server

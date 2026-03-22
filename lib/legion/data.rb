@@ -21,6 +21,7 @@ module Legion
         load_models
         setup_cache
         setup_local
+        Legion::Logging.info 'Legion::Data setup complete' if defined?(Legion::Logging)
       end
 
       def connection_setup
@@ -66,6 +67,7 @@ module Legion
       def shutdown
         Legion::Data::Local.shutdown if defined?(Legion::Data::Local) && Legion::Data::Local.connected?
         Legion::Data::Connection.shutdown
+        Legion::Logging.info 'Legion::Data shutdown complete' if defined?(Legion::Logging)
       end
 
       private

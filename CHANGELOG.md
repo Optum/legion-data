@@ -1,5 +1,29 @@
 # Legion::Data Changelog
 
+## [1.4.13] - 2026-03-22
+
+### Added
+- Comprehensive logging across data operations: connection lifecycle, archival, retention, storage tiers, event store, encryption key provider, spool drain, and vector search
+- `Connection.setup`: `.info` on successful connect (adapter://host:port/db or SQLite path)
+- `Connection.shutdown`: `.info` on disconnect
+- `Connection.connect_with_replicas`: `.debug` with replica count
+- `Data.setup`: `.info` on setup completion
+- `Data.shutdown`: `.info` on shutdown
+- `Archiver.archive_table`: `.info` on start and completion with table name and row count; `.warn` before re-raising S3/Azure upload failures
+- `Archival.archive!`: `.info` with table, destination, cutoff, and dry_run flag; `.info` on restore with row count
+- `Retention.archive_old_records`: `.info` with table name and archived row count
+- `Retention.purge_expired_records`: `.info` with archive table name and purged row count
+- `StorageTiers.archive_to_warm`: `.info` with table name and row count
+- `StorageTiers.export_to_cold`: `.info` with exported row count
+- `EventStore.append`: `.debug` with stream, event type, and sequence number
+- `EventStore.verify_chain`: `.warn` when hash chain is broken, with stream and sequence number
+- `Encryption::KeyProvider`: `.warn` on dev key fallback; `.debug` on Vault key derivation
+- `Encryption::SequelPlugin`: `.warn` on decrypt failure before re-raise
+- `Spool#write`: `.debug` with sub-namespace and filename
+- `Spool#flush`: `.info` with sub-namespace and drained item count
+- `Vector.ensure_extension!`: `.info` on successful pgvector setup
+- `Vector.cosine_search` / `Vector.l2_search`: `.debug` with table, column, and limit
+
 ## [1.4.12] - 2026-03-21
 
 ### Added

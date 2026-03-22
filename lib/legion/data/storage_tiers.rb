@@ -28,6 +28,7 @@ module Legion
             Legion::Data.connection[table].where(id: ids).delete
           end
 
+          Legion::Logging.info "Archived #{records.size} row(s) from #{table} to warm tier" if defined?(Legion::Logging)
           { archived: records.size, table: table.to_s }
         end
 
@@ -43,6 +44,7 @@ module Legion
 
           ids = records.map { |r| r[:id] }
           Legion::Data.connection[:data_archive].where(id: ids).update(tier: TIERS[:cold])
+          Legion::Logging.info "Exported #{records.size} row(s) to cold tier" if defined?(Legion::Logging)
           { exported: records.size, data: records }
         end
 

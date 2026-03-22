@@ -41,6 +41,7 @@ module Legion
           filename = "#{Time.now.strftime('%s%9N')}-#{SecureRandom.uuid}.json"
           path = File.join(dir, filename)
           File.write(path, ::JSON.generate(payload))
+          Legion::Logging.debug "Spool write: #{sub_namespace} -> #{filename}" if defined?(Legion::Logging)
           path
         end
 
@@ -56,6 +57,7 @@ module Legion
             File.delete(path)
             count += 1
           end
+          Legion::Logging.info "Spool drained #{count} item(s) from #{sub_namespace}" if defined?(Legion::Logging) && count.positive?
           count
         end
 

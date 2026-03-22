@@ -24,7 +24,12 @@ module Legion
               tenant = col_scope == :tenant ? self[:tenant_id] : nil
               key = provider.key_for(tenant_id: tenant)
               aad = "#{self.class.table_name}:#{pk}:#{name}"
-              Legion::Data::Encryption::Cipher.decrypt(raw.b, key: key, aad: aad)
+              begin
+                Legion::Data::Encryption::Cipher.decrypt(raw.b, key: key, aad: aad)
+              rescue StandardError => e
+                Legion::Logging.warn "Decrypt failed for #{self.class.table_name}##{pk} column #{name}: #{e.message}" if defined?(Legion::Logging)
+                raise
+              end
             end
 
             define_method(:"#{name}=") do |value|

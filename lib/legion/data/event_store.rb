@@ -42,6 +42,7 @@ module Legion
               created_at:      Time.now
             )
 
+            Legion::Logging.debug "EventStore append: stream=#{stream} type=#{type} seq=#{seq}" if defined?(Legion::Logging)
             { stream: stream, sequence: seq, hash: event_hash }
           end
         end
@@ -73,8 +74,14 @@ module Legion
           prev_hash = '0' * 64
           events.each do |e|
             expected = compute_hash(stream, e[:sequence_number], e[:event_type], e[:data_json], prev_hash)
-            return { valid: false, broken_at: e[:sequence_number] } unless e[:event_hash] == expected
-            return { valid: false, broken_at: e[:sequence_number] } unless e[:previous_hash] == prev_hash
+            unless e[:event_hash] == expected
+              Legion::Logging.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}" if defined?(Legion::Logging)
+              return { valid: false, broken_at: e[:sequence_number] }
+            end
+            unless e[:previous_hash] == prev_hash
+              Legion::Logging.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}" if defined?(Legion::Logging)
+              return { valid: false, broken_at: e[:sequence_number] }
+            end
 
             prev_hash = e[:event_hash]
           end

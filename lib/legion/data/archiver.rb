@@ -16,6 +16,8 @@ module Legion
         def archive_table(table:, retention_days: 90, batch_size: 1000, storage_backend: nil)
           return { skipped: true, reason: 'not_postgres' } unless postgres?
 
+          Legion::Logging.info "Archiving table #{table} (retention: #{retention_days}d)" if defined?(Legion::Logging)
+
           conn = Legion::Data.connection
           cutoff = Time.now - (retention_days * 86_400)
           now = Time.now.utc
@@ -62,6 +64,7 @@ module Legion
             paths << path
           end
 
+          Legion::Logging.info "Archived #{total_rows} rows from #{table} in #{batches} batch(es)" if defined?(Legion::Logging)
           { batches: batches, total_rows: total_rows, paths: paths }
         end
 
@@ -134,6 +137,7 @@ module Legion
         rescue UploadError
           raise
         rescue StandardError => e
+          Legion::Logging.warn "S3 upload failed: #{e.message}" if defined?(Legion::Logging)
           raise UploadError, "S3 upload failed: #{e.message}"
         end
 
@@ -148,6 +152,7 @@ module Legion
         rescue UploadError
           raise
         rescue StandardError => e
+          Legion::Logging.warn "Azure upload failed: #{e.message}" if defined?(Legion::Logging)
           raise UploadError, "Azure upload failed: #{e.message}"
         end
 
