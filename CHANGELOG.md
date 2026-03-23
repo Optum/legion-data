@@ -1,5 +1,11 @@
 # Legion::Data Changelog
 
+## [1.4.18] - 2026-03-23
+
+### Fixed
+- Fix extension migration timing: late `register_migrations` calls now run immediately if DB is connected
+- Fix cross-extension schema_migrations conflicts with per-extension migration tables
+
 ## [1.4.17] - 2026-03-22
 
 ### Added

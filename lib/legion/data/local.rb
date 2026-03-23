@@ -33,6 +33,7 @@ module Legion
         def register_migrations(name:, path:)
           @registered_migrations ||= {}
           @registered_migrations[name] = path
+          run_single_migration(name, path) if connected?
         end
 
         def registered_migrations
@@ -57,13 +58,19 @@ module Legion
         def run_migrations
           return unless local_settings.dig(:migrations, :auto_migrate) != false
 
-          registered_migrations.each_value do |path|
-            next unless File.directory?(path)
-
-            ::Sequel::TimestampMigrator.new(@connection, path).run
-          rescue StandardError => e
-            Legion::Logging.warn "Local migration failed for #{path}: #{e.message}" if defined?(Legion::Logging)
+          registered_migrations.each do |name, path|
+            run_single_migration(name, path)
           end
+        end
+
+        def run_single_migration(name, path)
+          return unless local_settings.dig(:migrations, :auto_migrate) != false
+          return unless File.directory?(path)
+
+          table = :"schema_migrations_#{name}"
+          ::Sequel::TimestampMigrator.new(@connection, path, table: table).run
+        rescue StandardError => e
+          Legion::Logging.warn "Local migration failed for #{path}: #{e.message}" if defined?(Legion::Logging)
         end
 
         def local_settings
