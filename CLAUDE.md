@@ -8,7 +8,7 @@
 Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
-**Version**: 1.4.4
+**Version**: 1.4.12
 **License**: Apache-2.0
 
 ## Supported Databases
@@ -46,7 +46,7 @@ Legion::Data (singleton module)
 │   ├── .shutdown      # Close local connection
 │   └── .reset!        # Clear all state (testing)
 │
-├── Migration          # Auto-migration system (25 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (26 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -182,7 +182,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 25 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 26 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog, AuditLog, RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant) |
