@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'spec_helper'
+
 RSpec.describe Legion::Data::Helper do
   describe '#data_connected?' do
     let(:test_class) do

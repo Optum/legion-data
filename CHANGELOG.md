@@ -5,6 +5,9 @@
 ### Added
 - `Legion::Data::Helper` mixin module with data convenience methods for LEX extensions (data_path, data_class, models_class, data_connected?, data_connection, local_data_connected?, local_data_connection, local_data_model)
 
+### Fixed
+- Add missing `require 'spec_helper'` in `helper_spec.rb` that caused `NameError: uninitialized constant Legion::Data::Helper`
+
 ## [1.4.16] - 2026-03-22
 
 ### Changed

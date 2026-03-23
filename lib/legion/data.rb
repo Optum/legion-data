@@ -11,6 +11,7 @@ require_relative 'data/local'
 require_relative 'data/spool'
 require_relative 'data/partition_manager'
 require_relative 'data/archiver'
+require_relative 'data/helper'
 
 module Legion
   module Data
