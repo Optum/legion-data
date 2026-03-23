@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.4.17] - 2026-03-22
+
+### Added
+- `Legion::Data::Helper` mixin module with data convenience methods for LEX extensions (data_path, data_class, models_class, data_connected?, data_connection, local_data_connected?, local_data_connection, local_data_model)
+
 ## [1.4.16] - 2026-03-22
 
 ### Changed
