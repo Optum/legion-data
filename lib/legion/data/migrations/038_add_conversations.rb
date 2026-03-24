@@ -22,7 +22,7 @@ Sequel.migration do
       Integer :output_tokens
       DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
 
-      index [:conversation_id, :seq], unique: true
+      index %i[conversation_id seq], unique: true
       foreign_key [:conversation_id], :conversations, key: :id
     end
   end
