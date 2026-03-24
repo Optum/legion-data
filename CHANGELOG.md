@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## [1.5.1] - 2026-03-24
+
+### Changed
+- `Legion::Data::Connection#merge_tls_creds` — now respects explicit `data.tls.enabled` flag; TLS opt-in only (no behavior change when flag is absent or false)
+
+### Added
+- `spec/legion/data/tls_spec.rb` — full coverage for merge_tls_creds feature flag behavior
+
 ## [1.5.0] - 2026-03-24
 
 ### Fixed

@@ -116,7 +116,10 @@ module Legion
           return creds if adapter == :sqlite
           return creds unless defined?(Legion::Crypt::TLS)
 
-          tls = Legion::Crypt::TLS.resolve(data_tls_settings, port: port)
+          tls_settings = data_tls_settings
+          return creds unless tls_settings[:enabled] == true
+
+          tls = Legion::Crypt::TLS.resolve(tls_settings, port: port)
           return creds unless tls[:enabled]
 
           case adapter

@@ -9,6 +9,10 @@ RSpec.describe 'Legion::Data::Connection TLS' do
 
   describe '.merge_tls_creds' do
     context 'with postgres adapter and TLS enabled' do
+      before do
+        allow(Legion::Settings).to receive(:[]).with(:data).and_return({ tls: { enabled: true } })
+      end
+
       it 'adds sslmode and sslrootcert' do
         allow(Legion::Crypt::TLS).to receive(:resolve).and_return(
           { enabled: true, verify: :peer, ca: '/ca.crt', cert: nil, key: nil, auto_detected: false }
@@ -40,6 +44,10 @@ RSpec.describe 'Legion::Data::Connection TLS' do
     end
 
     context 'with mysql2 adapter and TLS enabled' do
+      before do
+        allow(Legion::Settings).to receive(:[]).with(:data).and_return({ tls: { enabled: true } })
+      end
+
       it 'adds ssl_mode and sslca' do
         allow(Legion::Crypt::TLS).to receive(:resolve).and_return(
           { enabled: true, verify: :peer, ca: '/ca.crt', cert: nil, key: nil, auto_detected: false }
