@@ -1,8 +1,10 @@
 # Legion::Data Changelog
 
-## [1.4.19] - 2026-03-23
+## [1.5.0] - 2026-03-24
 
 ### Fixed
+- Slow query warnings now tagged with `[data][slow-query]` instead of bare timestamps
+- SQL log output uses tagged Legion::Logging::Logger for consistent `[data]` prefix
 - Fix Style/SymbolArray in conversations migration
 
 ## [1.4.18] - 2026-03-23

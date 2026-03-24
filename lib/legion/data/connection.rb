@@ -7,6 +7,31 @@ module Legion
     module Connection
       ADAPTERS = %i[sqlite mysql2 postgres].freeze
 
+      # Wraps a tagged Legion::Logging::Logger for Sequel's logger interface.
+      # Prefixes warn-level messages with [slow-query] since Sequel uses warn
+      # for queries exceeding log_warn_duration.
+      class SlowQueryLogger
+        def initialize(tagged_logger)
+          @tagged = tagged_logger
+        end
+
+        def warn(message)
+          @tagged.warn("[slow-query] #{message}")
+        end
+
+        def info(message)
+          @tagged.info(message)
+        end
+
+        def debug(message)
+          @tagged.debug(message)
+        end
+
+        def error(message)
+          @tagged.error(message)
+        end
+      end
+
       class << self
         attr_accessor :sequel
 
@@ -151,9 +176,14 @@ module Legion
         def configure_logging
           return if Legion::Settings[:data][:connection].nil? || Legion::Settings[:data][:connection][:log].nil?
 
-          @sequel.logger = Legion::Logging
+          @sequel.logger = build_data_logger
           @sequel.sql_log_level = Legion::Settings[:data][:connection][:sql_log_level]
           @sequel.log_warn_duration = Legion::Settings[:data][:connection][:log_warn_duration]
+        end
+
+        def build_data_logger
+          tagged = Legion::Logging::Logger.new(lex: 'data')
+          SlowQueryLogger.new(tagged)
         end
       end
     end

@@ -37,11 +37,11 @@ RSpec.describe 'Legion::Data::Connection' do
     expect(Legion::Data::Connection.creds_builder).to be_a Hash
   end
 
-  it 'using the Legion::Logging logger' do
+  it 'using a tagged SlowQueryLogger' do
     Legion::Data::Connection.setup
     expect(Legion::Data::Connection.sequel.loggers).to be_a Array
     expect(Legion::Data::Connection.sequel.loggers.count).to be > 0
-    expect(Legion::Data::Connection.sequel.loggers).to include Legion::Logging
+    expect(Legion::Data::Connection.sequel.loggers.first).to be_a Legion::Data::Connection::SlowQueryLogger
   end
 
   it 'uses other things' do
