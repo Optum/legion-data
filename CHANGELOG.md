@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.4.19] - 2026-03-23
+
+### Fixed
+- Fix Style/SymbolArray in conversations migration
+
 ## [1.4.18] - 2026-03-23
 
 ### Fixed
