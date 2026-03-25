@@ -55,6 +55,51 @@ module Legion
         }
       end
 
+      def connected?
+        Legion::Settings[:data][:connected] == true
+      rescue StandardError
+        false
+      end
+
+      def can_write?(table_name)
+        return false unless connected?
+
+        adapter = Legion::Settings[:data][:adapter]&.to_s
+        return true if adapter == 'sqlite'
+
+        @write_privileges ||= {}
+        return @write_privileges[table_name] unless @write_privileges[table_name].nil?
+
+        @write_privileges[table_name] = connection
+          .fetch("SELECT has_table_privilege(current_user, ?, 'INSERT') AS can", table_name.to_s)
+          .first[:can] == true
+      rescue StandardError
+        @write_privileges[table_name] = false if @write_privileges
+        false
+      end
+
+      def can_read?(table_name)
+        return false unless connected?
+
+        adapter = Legion::Settings[:data][:adapter]&.to_s
+        return true if adapter == 'sqlite'
+
+        @read_privileges ||= {}
+        return @read_privileges[table_name] unless @read_privileges[table_name].nil?
+
+        @read_privileges[table_name] = connection
+          .fetch("SELECT has_table_privilege(current_user, ?, 'SELECT') AS can", table_name.to_s)
+          .first[:can] == true
+      rescue StandardError
+        @read_privileges[table_name] = false if @read_privileges
+        false
+      end
+
+      def reset_privileges!
+        @write_privileges = nil
+        @read_privileges = nil
+      end
+
       def setup_cache
         cache_settings = Legion::Settings[:data][:cache]
         setup_static_cache if cache_settings[:static_cache]
