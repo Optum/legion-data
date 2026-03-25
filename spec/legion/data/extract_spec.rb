@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 require 'legion/data/extract'
+require 'legion/data/extract/handlers/text'
+require 'legion/data/extract/handlers/markdown'
+require 'legion/data/extract/handlers/csv'
+require 'legion/data/extract/handlers/json'
+require 'legion/data/extract/handlers/jsonl'
 require 'tempfile'
 
 RSpec.describe Legion::Data::Extract do
@@ -47,4 +52,28 @@ RSpec.describe Legion::Data::Extract do
     end
   end
 
+  describe '.extract with builtin handlers' do
+    it 'extracts a text file by path' do
+      f = Tempfile.new(['test', '.txt'])
+      f.write('integration test')
+      f.flush
+      result = described_class.extract(f.path)
+      expect(result[:success]).to be true
+      expect(result[:text]).to eq('integration test')
+      expect(result[:type]).to eq(:text)
+    ensure
+      f&.close!
+    end
+
+    it 'extracts with explicit type override' do
+      f = Tempfile.new(['test', '.unknown'])
+      f.write('forced text')
+      f.flush
+      result = described_class.extract(f.path, type: :text)
+      expect(result[:success]).to be true
+      expect(result[:text]).to eq('forced text')
+    ensure
+      f&.close!
+    end
+  end
 end

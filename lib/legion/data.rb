@@ -72,8 +72,8 @@ module Legion
         return @write_privileges[table_name] unless @write_privileges[table_name].nil?
 
         @write_privileges[table_name] = connection
-          .fetch("SELECT has_table_privilege(current_user, ?, 'INSERT') AS can", table_name.to_s)
-          .first[:can] == true
+                                        .fetch("SELECT has_table_privilege(current_user, ?, 'INSERT') AS can", table_name.to_s)
+                                        .first[:can] == true
       rescue StandardError
         @write_privileges[table_name] = false if @write_privileges
         false
@@ -89,8 +89,8 @@ module Legion
         return @read_privileges[table_name] unless @read_privileges[table_name].nil?
 
         @read_privileges[table_name] = connection
-          .fetch("SELECT has_table_privilege(current_user, ?, 'SELECT') AS can", table_name.to_s)
-          .first[:can] == true
+                                       .fetch("SELECT has_table_privilege(current_user, ?, 'SELECT') AS can", table_name.to_s)
+                                       .first[:can] == true
       rescue StandardError
         @read_privileges[table_name] = false if @read_privileges
         false
