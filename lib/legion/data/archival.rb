@@ -61,6 +61,55 @@ module Legion
           hot + warm
         end
 
+        def archive_completed_tasks(days_old: 90, batch_size: 1000)
+          conn = Legion::Data.connection
+          cutoff = Time.now - (days_old * 86_400)
+
+          return { archived: 0, cutoff: cutoff.iso8601 } unless conn&.table_exists?(:tasks) && conn.table_exists?(:tasks_archive)
+
+          candidates = conn[:tasks]
+                       .where(status: %w[completed failed])
+                       .where(Sequel.lit('created < ?', cutoff))
+                       .limit(batch_size)
+
+          count = candidates.count
+          if count.positive?
+            archive_cols = conn.schema(:tasks_archive).to_set(&:first)
+            conn.transaction do
+              candidates.each do |row|
+                archive_row = {
+                  original_id:         row[:id],
+                  status:              row[:status],
+                  relationship_id:     row[:relationship_id],
+                  original_created_at: row[:created],
+                  original_updated_at: row[:updated],
+                  archived_at:         Time.now
+                }
+                archive_row[:archive_reason] = 'completed_task_archival' if archive_cols.include?(:archive_reason)
+                conn[:tasks_archive].insert(archive_row)
+              end
+              conn[:tasks].where(id: candidates.select(:id)).delete
+            end
+          end
+
+          Legion::Logging.info "archive_completed_tasks: archived #{count} tasks (cutoff: #{cutoff.iso8601})" if defined?(Legion::Logging)
+          { archived: count, cutoff: cutoff.iso8601 }
+        end
+
+        def run_scheduled_archival
+          results = {}
+          results[:tasks] = archive_completed_tasks
+
+          conn = Legion::Data.connection
+          if conn&.table_exists?(:metering_records)
+            results[:metering] = Legion::Data::Retention.archive_old_records(
+              table: :metering_records, date_column: :recorded_at
+            )
+          end
+
+          results
+        end
+
         private
 
         def archive_table!(source:, destination:, cutoff:, batch_size:, dry_run:)

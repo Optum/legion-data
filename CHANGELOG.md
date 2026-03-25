@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.6.2] - 2026-03-25
+
+### Changed
+- Migration 041: Resize all pgvector columns from `vector(1536)` to `vector(1024)` for cross-provider embedding compatibility (apollo_entries.embedding, functions.embedding_vector, memory_traces.embedding). Drops and recreates HNSW cosine indexes.
+
 ## [1.6.1] - 2026-03-25
 
 ### Fixed
