@@ -1,5 +1,20 @@
 # Legion::Data Changelog
 
+## [1.6.6] - 2026-03-25
+
+### Added
+- `connected?` — returns true when the shared DB is connected (reads `Settings[:data][:connected]`)
+- `can_write?(table_name)` — checks INSERT privilege; sqlite always returns true, postgres queries `has_table_privilege`, results cached per table
+- `can_read?(table_name)` — checks SELECT privilege; sqlite always returns true, postgres queries `has_table_privilege`, results cached per table
+- `reset_privileges!` — clears cached privilege results (used in tests and after re-connect)
+- `Legion::Data::Extract` — file format extraction with handler registry
+- Built-in handlers: text, markdown, csv, json, jsonl (no external gems required)
+- Optional handlers: pdf (pdf-reader), docx (docx), pptx (rubyzip), xlsx (rubyXL), html (nokogiri) — lazy-loaded, degrade gracefully if gem not installed
+- `Extract.register_handler(type, klass)` — register custom format handlers
+- `Extract.can_extract?(type)` — check if a type can be extracted (handler present and gem available)
+- `Extract.supported_types` — list all registered types
+- Added `csv` gem dependency (Ruby 3.4 stdlib split)
+
 ## [1.6.4] - 2026-03-25
 
 ### Added
