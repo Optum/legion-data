@@ -13,6 +13,7 @@ require_relative 'data/partition_manager'
 require_relative 'data/archiver'
 require_relative 'data/helper'
 require_relative 'data/rls'
+require_relative 'data/extract'
 
 module Legion
   module Data
