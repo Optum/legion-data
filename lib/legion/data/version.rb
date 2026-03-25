@@ -2,6 +2,6 @@
 
 module Legion
   module Data
-    VERSION = '1.5.1'
+    VERSION = '1.5.2'
   end
 end

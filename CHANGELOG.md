@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.5.2] - 2026-03-24
+
+### Fixed
+- TLS spec mock `resolve` methods used `_port:` keyword which mismatched production `port:` call, causing `ArgumentError: unknown keyword: :port` on CI
+
 ## [1.5.1] - 2026-03-24
 
 ### Changed
