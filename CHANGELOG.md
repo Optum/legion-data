@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.6.1] - 2026-03-25
+
+### Fixed
+- Load Sequel `pg_array` extension on Postgres connections — required by Apollo for `text[]` column inserts
+
 ## [1.6.0] - 2026-03-25
 
 ### Fixed

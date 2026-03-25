@@ -448,6 +448,11 @@ module Legion
 
           data = Legion::Settings[:data]
 
+          if adapter == :postgres
+            Sequel.extension(:pg_array)
+            @sequel.extension(:pg_array)
+          end
+
           if data[:connection_validation] != false
             @sequel.extension(:connection_validator)
             @sequel.pool.connection_validation_timeout = data[:connection_validation_timeout] || 600
