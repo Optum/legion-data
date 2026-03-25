@@ -17,7 +17,7 @@ RSpec.describe '039_add_audit_archive_manifest migration' do
   it 'has required columns' do
     cols = db.schema(:audit_archive_manifests).map { |c| c[0] }
     expect(cols).to include(:id, :tier, :storage_url, :start_date, :end_date,
-                             :entry_count, :checksum, :first_hash, :last_hash,
-                             :archived_at)
+                            :entry_count, :checksum, :first_hash, :last_hash,
+                            :archived_at)
   end
 end
