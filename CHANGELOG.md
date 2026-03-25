@@ -6,6 +6,7 @@
 - `Legion::Data::Connection#merge_tls_creds` — now respects explicit `data.tls.enabled` flag; TLS opt-in only (no behavior change when flag is absent or false)
 
 ### Added
+- Migration 039: `audit_archive_manifests` table for tracking cold storage uploads (tier, storage_url, date range, entry count, SHA-256 checksum, hash chain anchors)
 - `spec/legion/data/tls_spec.rb` — full coverage for merge_tls_creds feature flag behavior
 
 ## [1.5.0] - 2026-03-24
