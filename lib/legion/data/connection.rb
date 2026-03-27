@@ -123,18 +123,7 @@ module Legion
                       end
                     end
           Legion::Settings[:data][:connected] = true
-          if defined?(Legion::Logging)
-            if adapter == :sqlite
-              Legion::Logging.info "Connected to SQLite at #{sqlite_path}"
-            else
-              creds = Legion::Data::Settings.creds(adapter)
-              user = creds[:user] || creds[:username] || 'unknown'
-              host = creds[:host] || '127.0.0.1'
-              port = creds[:port]
-              db   = creds[:database] || creds[:db]
-              Legion::Logging.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
-            end
-          end
+          log_connection_info if defined?(Legion::Logging)
           configure_extensions
           connect_with_replicas
         end
@@ -271,6 +260,19 @@ module Legion
         rescue StandardError => e
           Legion::Logging.debug("Connection#data_tls_settings failed: #{e.message}") if defined?(Legion::Logging)
           {}
+        end
+
+        def log_connection_info
+          if adapter == :sqlite
+            Legion::Logging.info "Connected to SQLite at #{sqlite_path}"
+          else
+            actual = Legion::Settings[:data][:creds] || {}
+            user = actual[:user] || actual[:username] || 'unknown'
+            host = actual[:host] || '127.0.0.1'
+            port = actual[:port]
+            db   = actual[:database] || actual[:db]
+            Legion::Logging.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
+          end
         end
 
         def dev_fallback?

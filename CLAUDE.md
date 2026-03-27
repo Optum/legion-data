@@ -8,7 +8,7 @@
 Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
-**Version**: 1.6.0
+**Version**: 1.6.6
 **License**: Apache-2.0
 
 ## Supported Databases
@@ -56,7 +56,7 @@ Legion::Data (singleton module)
 │   ├── .shutdown      # Close local connection
 │   └── .reset!        # Clear all state (testing)
 │
-├── Migration          # Auto-migration system (26 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (47 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -83,7 +83,28 @@ Legion::Data (singleton module)
 │       ├── 023_add_data_archive
 │       ├── 024_add_tenant_partition_columns
 │       ├── 025_add_tenants_table
-│       └── 026_add_function_embeddings  # description + embedding (TEXT) on functions; postgres: embedding_vector vector(1536) with HNSW cosine index
+│       ├── 026_add_function_embeddings  # description + embedding (TEXT) on functions; postgres: embedding_vector vector(1536) with HNSW cosine index
+│       ├── 027_add_apollo_source_provider
+│       ├── 028_add_agent_cluster
+│       ├── 029_add_agent_cluster_tasks
+│       ├── 030_add_approval_queue
+│       ├── 031_add_task_depth
+│       ├── 032_add_task_cancelled_at
+│       ├── 033_add_task_delay
+│       ├── 034_add_archive_manifest
+│       ├── 035_add_apollo_source_channel
+│       ├── 036_add_audit_context_snapshot
+│       ├── 037_add_apollo_knowledge_domain
+│       ├── 038_add_conversations
+│       ├── 039_add_audit_archive_manifest  # 7-year tiered audit retention
+│       ├── 040_add_slow_query_indexes       # tasks table performance indexes
+│       ├── 041_resize_vector_columns
+│       ├── 042_add_tenant_to_registry_tables
+│       ├── 043_add_rls_placeholder          # PostgreSQL row-level security
+│       ├── 044_expand_memory_traces
+│       ├── 045_add_memory_associations
+│       ├── 046_add_metering_hourly_rollup
+│       └── 047_apollo_knowledge_capture     # identity cols, ops table, archive table, 25+ indexes
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -248,7 +269,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 26 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 47 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog, AuditLog, RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant) |
@@ -261,6 +282,12 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data/storage_tiers.rb` | Hot/warm/cold archival lifecycle: `archive_to_warm`, `export_to_cold`, `stats` |
 | `lib/legion/data/archival.rb` | Archival module entry point and configuration |
 | `lib/legion/data/archival/` | Archival strategy implementations |
+| `lib/legion/data/extract.rb` | 10-handler text extraction registry (txt/md/csv/json/jsonl/html/xlsx/docx/pdf/pptx) |
+| `lib/legion/data/extract/handlers/` | Per-format extraction handlers (base, csv, docx, html, json, jsonl, markdown, pdf, pptx, text, xlsx) |
+| `lib/legion/data/extract/type_detector.rb` | MIME type detection for extract registry |
+| `lib/legion/data/rls.rb` | PostgreSQL row-level security helpers (tenant isolation, session variable) |
+| `lib/legion/data/partition_manager.rb` | Tenant partition management |
+| `lib/legion/data/retention.rb` | Audit retention and archival lifecycle |
 | `lib/legion/data/settings.rb` | Default configuration with per-adapter credential presets |
 | `lib/legion/data/version.rb` | VERSION constant |
 | `exe/legionio_migrate` | CLI executable for running database migrations standalone |

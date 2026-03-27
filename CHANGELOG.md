@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.6.8] - 2026-03-27
+
+### Changed
+- Documentation updates (CLAUDE.md, README.md)
+
 ## [1.6.7] - 2026-03-26
 
 ### Removed

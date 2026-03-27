@@ -1,8 +1,8 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations, and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, and Apollo shared knowledge tables.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations (47 numbered migrations), and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, audit log, and archive tables.
 
-**Version**: 1.4.12
+**Version**: 1.6.6
 
 ## Supported Databases
 
@@ -12,7 +12,7 @@ Persistent database storage for the [LegionIO](https://github.com/LegionIO/Legio
 | MySQL | `mysql2` | `mysql2` | No |
 | PostgreSQL | `postgres` | `pg` | No |
 
-SQLite is the default adapter and requires no external database server. For MySQL or PostgreSQL, install the corresponding gem and set the adapter in your configuration.
+SQLite is the default adapter. For MySQL or PostgreSQL, install the corresponding gem and set the adapter in your configuration.
 
 ## Installation
 
@@ -36,21 +36,23 @@ gem 'legion-data'
 |-------|-------|-------------|
 | `Extension` | `extensions` | Installed LEX extensions |
 | `Function` | `functions` | Available functions per extension |
-| `Runner` | `runners` | Runner definitions (extension + function bindings) |
+| `Runner` | `runners` | Runner definitions |
 | `Node` | `nodes` | Cluster node registry |
 | `Task` | `tasks` | Task instances |
 | `TaskLog` | `task_logs` | Task execution logs |
 | `Setting` | `settings` | Persistent settings store |
-| `DigitalWorker` | `digital_workers` | Digital worker registry (AI-as-labor platform) |
+| `DigitalWorker` | `digital_workers` | Digital worker registry |
 | `Relationship` | `relationships` | Task trigger/action relationships between functions |
-| `ApolloEntry` | `apollo_entries` | Apollo shared knowledge entries (PostgreSQL only) |
-| `ApolloRelation` | `apollo_relations` | Relations between Apollo knowledge entries (PostgreSQL only) |
-| `ApolloExpertise` | `apollo_expertise` | Per-agent domain expertise tracking (PostgreSQL only) |
-| `ApolloAccessLog` | `apollo_access_log` | Apollo entry access audit log (PostgreSQL only) |
+| `AuditLog` | `audit_log` | Tamper-evident audit trail with hash chain |
+| `RbacRoleAssignment` | `rbac_role_assignments` | RBAC principal -> role mappings |
+| `RbacRunnerGrant` | `rbac_runner_grants` | Per-runner permission grants |
+| `RbacCrossTeamGrant` | `rbac_cross_team_grants` | Cross-team access grants |
+| `ApolloEntry` | `apollo_entries` | Apollo knowledge entries — PostgreSQL only (pgvector) |
+| `ApolloRelation` | `apollo_relations` | Relations between Apollo entries — PostgreSQL only |
+| `ApolloExpertise` | `apollo_expertise` | Per-agent domain expertise — PostgreSQL only |
+| `ApolloAccessLog` | `apollo_access_log` | Apollo access audit log — PostgreSQL only |
 
 Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
-
-Migration 026 adds `description` (TEXT) and `embedding` (TEXT, JSON-serialized vector) columns to the `functions` table, plus a `embedding_vector vector(1536)` column with HNSW cosine index on PostgreSQL for semantic similarity search of runner functions.
 
 ## Usage
 
@@ -66,7 +68,7 @@ Legion::Data::Model::Extension.all  # => Sequel::Dataset
 
 ### Local Database
 
-v1.3.0 introduces `Legion::Data::Local`, a parallel SQLite database always stored locally on the node. It is used for agentic cognitive state persistence (memory traces, trust scores, dream journals, etc.) and is independent of the shared database.
+`Legion::Data::Local` is a parallel SQLite database always stored locally on the node. Used for agentic cognitive state persistence (memory traces, trust scores, dream journals) and is independent of the shared database.
 
 ```ruby
 # Local DB is set up automatically during Legion::Data.setup
@@ -81,7 +83,29 @@ Legion::Data::Local.connected?   # => true
 Legion::Data::Local.db_path      # => "legionio_local.db"
 ```
 
-The local database file (`legionio_local.db` by default) can be deleted for cryptographic erasure — no residual data. This is used by `lex-privatecore`.
+Deleting `legionio_local.db` provides cryptographic erasure — no residual data.
+
+### Text Extraction
+
+`Legion::Data::Extract` provides a 10-handler registry for extracting text from documents. Supports: `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`, `.xlsx`, `.docx`, `.pdf`, `.pptx`. Used by `lex-knowledge` for corpus ingestion.
+
+```ruby
+text = Legion::Data::Extract.extract('/path/to/document.pdf')
+```
+
+### Row-Level Security
+
+`Legion::Data::Rls` provides tenant isolation helpers for PostgreSQL (migration 043). Sets `app.current_tenant_id` session variable before queries and resets it after.
+
+### Spool (Filesystem Buffer)
+
+`Legion::Data::Spool` provides a filesystem-backed write buffer. When the database is unavailable, data is written to `~/.legionio/data/spool/` and replayed once the connection is restored.
+
+```ruby
+spool = Legion::Data::Spool.for(Legion::Extensions::MyLex)
+spool.write({ task_id: SecureRandom.uuid, data: payload })
+spool.drain { |entry| process(entry) }
+```
 
 ## Configuration
 
@@ -132,7 +156,7 @@ The local database file (`legionio_local.db` by default) can be deleted for cryp
 }
 ```
 
-PostgreSQL with `pgvector` is required for Apollo models. Install the extension in your database before running migrations:
+PostgreSQL with `pgvector` is required for Apollo models:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -155,21 +179,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 }
 ```
 
-Set `enabled: false` to disable local SQLite entirely.
-
-### Spool (Filesystem Buffer)
-
-`Legion::Data::Spool` provides a filesystem-backed write buffer for extensions. When the database is unavailable, task data can be written to `~/.legionio/data/spool/` and replayed once the connection is restored.
-
-```ruby
-spool = Legion::Data::Spool.for(Legion::Extensions::MyLex)
-spool.write({ task_id: SecureRandom.uuid, data: payload })
-spool.drain { |entry| process(entry) }
-```
-
 ### Dev Mode Fallback
 
-When `dev_mode: true` and a network database (MySQL/PostgreSQL) is unreachable, the shared connection falls back to SQLite automatically instead of raising.
+When `dev_mode: true` and a network database is unreachable, the shared connection falls back to SQLite automatically:
 
 ```json
 {
@@ -182,7 +194,7 @@ When `dev_mode: true` and a network database (MySQL/PostgreSQL) is unreachable, 
 
 ### HashiCorp Vault Integration
 
-When Vault is connected and a `database/creds/legion` secret path exists, credentials are fetched dynamically from Vault at connection time, overriding any static `creds` configuration.
+When Vault is connected, credentials are fetched dynamically from `database/creds/legion`, overriding any static `creds` configuration.
 
 ## Requirements
 
