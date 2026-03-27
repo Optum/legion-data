@@ -8,7 +8,7 @@
 Manages persistent database storage for the LegionIO framework. Supports SQLite (default), MySQL, and PostgreSQL via Sequel ORM. Provides automatic schema migrations and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, webhooks, audit log, and archive tables. Also provides a parallel local SQLite database (`Legion::Data::Local`) for agentic cognitive state persistence.
 
 **GitHub**: https://github.com/LegionIO/legion-data
-**Version**: 1.6.6
+**Version**: 1.6.9
 **License**: Apache-2.0
 
 ## Supported Databases
@@ -56,7 +56,7 @@ Legion::Data (singleton module)
 │   ├── .shutdown      # Close local connection
 │   └── .reset!        # Clear all state (testing)
 │
-├── Migration          # Auto-migration system (47 migrations, Sequel DSL)
+├── Migration          # Auto-migration system (48 migrations, Sequel DSL)
 │   └── migrations/
 │       ├── 001_add_schema_columns
 │       ├── 002_add_nodes
@@ -104,7 +104,8 @@ Legion::Data (singleton module)
 │       ├── 044_expand_memory_traces
 │       ├── 045_add_memory_associations
 │       ├── 046_add_metering_hourly_rollup
-│       └── 047_apollo_knowledge_capture     # identity cols, ops table, archive table, 25+ indexes
+│       ├── 047_apollo_knowledge_capture     # identity cols, ops table, archive table, 25+ indexes
+│       └── 048_add_financial_logging        # 7 UAIS cost recovery tables (identity, asset, environment, accounting, execution, tags, usage)
 │
 ├── Model              # Sequel model loader
 │   └── Models/
@@ -269,7 +270,7 @@ Per-adapter credential defaults are defined in `Settings::CREDS`:
 | `lib/legion/data.rb` | Module entry, setup/shutdown lifecycle |
 | `lib/legion/data/connection.rb` | Sequel database connection (adapter selection) |
 | `lib/legion/data/migration.rb` | Migration runner |
-| `lib/legion/data/migrations/` | 47 numbered migration files (Sequel DSL) |
+| `lib/legion/data/migrations/` | 48 numbered migration files (Sequel DSL) |
 | `lib/legion/data/model.rb` | Model autoloader |
 | `lib/legion/data/local.rb` | Local SQLite module for agentic cognitive state |
 | `lib/legion/data/models/` | Sequel models (Extension, Function, Runner, Node, Task, TaskLog, Setting, DigitalWorker, Relationship, ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog, AuditLog, RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant) |
@@ -309,6 +310,7 @@ Optional persistent storage initialized during `Legion::Service` startup (after 
 12. Webhook subscription storage (migration 020)
 13. Archive, memory traces, and tenant partition tables (migrations 021–025)
 14. Function embeddings for semantic runner discovery (migration 026 — description + vector columns on functions table)
+15. Financial logging for UAIS cost recovery (migration 048 — 7 tables: identity, asset, environment, accounting, execution, tags, usage rollup)
 
 ---
 
