@@ -106,15 +106,15 @@ Legion::Data (singleton module)
 │       ├── 046_add_metering_hourly_rollup
 │       ├── 047_apollo_knowledge_capture     # identity cols, ops table, archive table, 25+ indexes
 │       ├── 048_add_financial_logging        # 7 UAIS cost recovery tables (identity, asset, environment, accounting, execution, tags, usage)
-│       ├── 049_add_remote_invocable        # remote_invocable boolean on functions (v3.0)
+│       ├── 049_add_remote_invocable_to_functions  # remote_invocable boolean on functions (v3.0)
 │       ├── 050_add_missing_indexes         # critical indexes across 13 tables
 │       ├── 051_fix_tasks_created_at        # created_at alias for archival (PG generated, SQLite backfill)
-│       ├── 052_drop_redundant_apollo_idx   # PG only: remove duplicate auto-named indexes
+│       ├── 052_drop_redundant_apollo_indexes   # PG only: remove duplicate auto-named indexes
 │       ├── 053_add_tasks_relationship_fk   # PG only: FK constraint on tasks.relationship_id
-│       ├── 054_add_component_type          # component_type on functions (runner/hook/absorber, v3.0)
-│       ├── 055_add_definition              # definition text column on functions (v3.0)
+│       ├── 054_add_component_type_to_functions  # component_type on functions (runner/hook/absorber, v3.0)
+│       ├── 055_add_definition_to_functions      # definition text column on functions (v3.0)
 │       ├── 056_add_absorber_patterns       # absorber_patterns table for pattern-matched acquisition
-│       └── 057_add_routing_key             # routing_key on runners (v3.0 AMQP)
+│       └── 057_add_routing_key_to_runners  # routing_key on runners (v3.0 AMQP)
 │
 ├── Model              # Sequel model loader
 │   └── Models/

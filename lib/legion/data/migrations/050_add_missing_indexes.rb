@@ -5,15 +5,25 @@ Sequel.migration do
     # runners: FK without index, hot-path lookups, duplicate prevention
     if table_exists?(:runners)
       # Remove any duplicate (extension_id, name) rows before adding the unique index.
-      # Keep the lowest id per pair to preserve the original registration.
+      # Keep the active and most recently updated row per pair; use id DESC as tie-breaker.
       run <<~SQL
+        WITH ranked AS (
+          SELECT
+            id,
+            ROW_NUMBER() OVER (
+              PARTITION BY extension_id, name
+              ORDER BY
+                active DESC,
+                updated DESC,
+                id DESC
+            ) AS rn
+          FROM runners
+        )
         DELETE FROM runners
-        WHERE id NOT IN (
-          SELECT id FROM (
-            SELECT MIN(id) AS id
-            FROM runners
-            GROUP BY extension_id, name
-          ) AS dedup
+        WHERE id IN (
+          SELECT id
+          FROM ranked
+          WHERE rn > 1
         )
       SQL
 

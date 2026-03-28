@@ -12,7 +12,9 @@ RSpec.describe 'Migration 053: add tasks relationship FK' do
 
   context 'when adapter is not postgres' do
     it 'skips constraint addition gracefully' do
-      skip 'postgres-only migration' if db.adapter_scheme == :postgres
+      skip 'only applies to non-postgres adapters' if db.adapter_scheme == :postgres
+
+      expect { Sequel::Migrator.run(db, File.expand_path('../../lib/legion/data/migrations', __dir__), target: 53) }.not_to raise_error
     end
   end
 
