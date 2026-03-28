@@ -12,7 +12,7 @@ RSpec.describe 'Migration 053: add tasks relationship FK' do
 
   context 'when adapter is not postgres' do
     it 'skips constraint addition gracefully' do
-      skip 'postgres-only migration' unless db.adapter_scheme == :postgres
+      skip 'postgres-only migration' if db.adapter_scheme == :postgres
     end
   end
 

@@ -4,6 +4,17 @@ Sequel.migration do
   up do
     # runners: FK without index, hot-path lookups, duplicate prevention
     if table_exists?(:runners)
+      # Remove any duplicate (extension_id, name) rows before adding the unique index.
+      # Keep the lowest id per pair to preserve the original registration.
+      run <<~SQL
+        DELETE FROM runners
+        WHERE id NOT IN (
+          SELECT MIN(id)
+          FROM runners
+          GROUP BY extension_id, name
+        )
+      SQL
+
       alter_table(:runners) do
         add_index :extension_id, name: :idx_runners_extension_id, if_not_exists: true
         add_index :namespace, name: :idx_runners_namespace, if_not_exists: true
