@@ -11,6 +11,14 @@ module Legion
           tables:          %w[tasks metering_records].freeze
         }.freeze
 
+        # Per-table date column overrides. The Retention module defaults to :created_at,
+        # but legacy tables (like tasks) use :created. Migration 051 may add a created_at
+        # column/alias for tasks (implementation varies by adapter); this map forces use of
+        # :created so behavior is consistent across legacy schemas and adapters.
+        DATE_COLUMN_OVERRIDES = {
+          'tasks' => :created
+        }.freeze
+
         attr_reader :warm_after_days, :cold_after_days, :batch_size, :tables
 
         def initialize(**opts)

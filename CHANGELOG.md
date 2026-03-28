@@ -1,5 +1,25 @@
 # Legion::Data Changelog
 
+## [1.6.11] - 2026-03-28
+
+### Added
+- Migration 050: critical missing indexes across 13 tables (runners, tasks, digital_workers, audit_log, webhook_deliveries, webhook_dead_letters, conversations, approval_queue, rbac_role_assignments, rbac_cross_team_grants, memory_traces, agent_cluster_tasks, finlog_executions)
+- Migration 051: fix tasks archival column mismatch — adds `created_at` column (PG: generated from `created`, SQLite/MySQL: backfilled)
+- Migration 052: drop redundant Apollo indexes (PG only) — auto-named duplicates from migration 012 superseded by explicit indexes in migration 047
+- Migration 053: FK constraint for `tasks.relationship_id` (PG only) with orphan cleanup and ON DELETE SET NULL
+- Migration 054: add `component_type` column to functions table (v3.0 naming convention — runner/hook/absorber)
+- Migration 055: add nullable `definition` text column to functions table (v3.0 method contract storage)
+- Migration 056: add `absorber_patterns` table for pattern-matched content acquisition (v3.0)
+- Migration 057: add `routing_key` column to runners table (v3.0 AMQP routing key storage)
+
+### Fixed
+- `Archival::Policy` now includes `DATE_COLUMN_OVERRIDES` map for legacy tables using non-standard date columns
+
+## [1.6.10] - 2026-03-28
+
+### Added
+- Migration 049: adds `remote_invocable` boolean column (default: true) to the `functions` table. Allows per-function control over whether a registered function can be dispatched remotely via AMQP from the `LexDispatch` API layer.
+
 ## [1.6.9] - 2026-03-27
 
 ### Added
