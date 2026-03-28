@@ -17,13 +17,7 @@ Sequel.migration do
     SQL
 
     # Skip if constraint already exists (idempotency guard)
-    constraint_exists = begin
-      run(
-        "SELECT 1 FROM pg_constraint WHERE conname = 'fk_tasks_relationship_id'"
-      ).ntuples.positive?
-    rescue StandardError
-      false
-    end
+    constraint_exists = self[:pg_constraint].where(conname: 'fk_tasks_relationship_id').any?
 
     unless constraint_exists
       run <<~SQL

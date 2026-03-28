@@ -24,7 +24,7 @@ module Legion
 
           count = 0
           db.transaction do
-            records = db[table].where(Sequel.lit("#{date_column} < ?", cutoff))
+            records = db[table].where(Sequel.identifier(date_column) < cutoff)
             count = records.count
             if count.positive?
               db[archive_table].multi_insert(records.all)
@@ -47,7 +47,7 @@ module Legion
                             :created_at
                           end
           cutoff = Time.now - (retention_years * 365 * 86_400)
-          expired = db[archive_table].where(Sequel.lit("#{date_column} < ?", cutoff))
+          expired = db[archive_table].where(Sequel.identifier(date_column) < cutoff)
           count = expired.count
           expired.delete if count.positive?
           Legion::Logging.info "Purged #{count} expired row(s) from #{archive_table}" if defined?(Legion::Logging) && count.positive?

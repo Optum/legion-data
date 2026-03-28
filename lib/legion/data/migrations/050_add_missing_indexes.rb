@@ -9,9 +9,11 @@ Sequel.migration do
       run <<~SQL
         DELETE FROM runners
         WHERE id NOT IN (
-          SELECT MIN(id)
-          FROM runners
-          GROUP BY extension_id, name
+          SELECT id FROM (
+            SELECT MIN(id) AS id
+            FROM runners
+            GROUP BY extension_id, name
+          ) AS dedup
         )
       SQL
 
