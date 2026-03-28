@@ -2,10 +2,10 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:tasks)
+    next unless table_exists?(:tasks)
 
     existing_cols = schema(:tasks).map(&:first)
-    return if existing_cols.include?(:created_at)
+    next if existing_cols.include?(:created_at)
 
     if adapter_scheme == :postgres
       # Add a generated column so retention/archival queries using created_at work transparently
@@ -26,10 +26,10 @@ Sequel.migration do
   end
 
   down do
-    return unless table_exists?(:tasks)
+    next unless table_exists?(:tasks)
 
     existing_cols = schema(:tasks).map(&:first)
-    return unless existing_cols.include?(:created_at)
+    next unless existing_cols.include?(:created_at)
 
     if adapter_scheme == :postgres
       run 'DROP INDEX IF EXISTS idx_tasks_created_at'

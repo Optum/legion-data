@@ -2,8 +2,8 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:runners)
-    return if schema(:runners).any? { |c, _| c == :routing_key }
+    next unless table_exists?(:runners)
+    next if schema(:runners).any? { |c, _| c == :routing_key }
 
     alter_table(:runners) do
       add_column :routing_key, String, size: 512, null: true
@@ -12,8 +12,8 @@ Sequel.migration do
   end
 
   down do
-    return unless table_exists?(:runners)
-    return unless schema(:runners).any? { |c, _| c == :routing_key }
+    next unless table_exists?(:runners)
+    next unless schema(:runners).any? { |c, _| c == :routing_key }
 
     alter_table(:runners) do
       drop_index :routing_key, name: :idx_runners_routing_key, if_exists: true
