@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'archival/policy'
+
 module Legion
   module Data
     module Retention
