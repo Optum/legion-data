@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.6.10] - 2026-03-28
+
+### Added
+- Migration 049: adds `remote_invocable` boolean column (default: true) to the `functions` table. Allows per-function control over whether a registered function can be dispatched remotely via AMQP from the `LexDispatch` API layer.
+
 ## [1.6.9] - 2026-03-27
 
 ### Added
