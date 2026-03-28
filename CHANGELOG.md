@@ -1,5 +1,15 @@
 # Legion::Data Changelog
 
+## [1.6.12] - 2026-03-28
+
+### Added
+- VTT (WebVTT) extract handler for meeting transcript parsing (`Handlers::Vtt`)
+  - Parses speaker tags (`<v SpeakerName>`), timestamps, and WEBVTT header
+  - `preserve_speakers: true` (default) prefixes each line with speaker name
+  - Accepts inline VTT string content or a file path
+  - Returns `{ text:, metadata: { bytes:, speakers:, line_count: } }`
+- `.vtt` extension registered in `TypeDetector::EXTENSION_MAP` (maps to `:vtt`)
+
 ## [1.6.11] - 2026-03-28
 
 ### Added

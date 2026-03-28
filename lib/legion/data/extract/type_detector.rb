@@ -17,7 +17,8 @@ module Legion
           '.json'     => :json,
           '.jsonl'    => :jsonl,
           '.html'     => :html,
-          '.htm'      => :html
+          '.htm'      => :html,
+          '.vtt'      => :vtt
         }.freeze
 
         module_function
