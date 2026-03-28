@@ -16,12 +16,23 @@ Sequel.migration do
         AND relationship_id NOT IN (SELECT id FROM relationships);
     SQL
 
-    run <<~SQL
-      ALTER TABLE tasks
-        ADD CONSTRAINT fk_tasks_relationship_id
-        FOREIGN KEY (relationship_id) REFERENCES relationships(id)
-        ON DELETE SET NULL;
-    SQL
+    # Skip if constraint already exists (idempotency guard)
+    constraint_exists = begin
+      run(
+        "SELECT 1 FROM pg_constraint WHERE conname = 'fk_tasks_relationship_id'"
+      ).ntuples.positive?
+    rescue StandardError
+      false
+    end
+
+    unless constraint_exists
+      run <<~SQL
+        ALTER TABLE tasks
+          ADD CONSTRAINT fk_tasks_relationship_id
+          FOREIGN KEY (relationship_id) REFERENCES relationships(id)
+          ON DELETE SET NULL;
+      SQL
+    end
   end
 
   down do

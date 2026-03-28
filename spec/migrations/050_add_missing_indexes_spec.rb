@@ -127,14 +127,14 @@ RSpec.describe 'Migration 050: add missing indexes' do
   describe 'memory_traces table (conditional columns)' do
     it 'has index on consolidation_candidate if column exists' do
       cols = db.schema(:memory_traces).map(&:first)
-      next unless cols.include?(:consolidation_candidate)
+      skip 'memory_traces.consolidation_candidate column not present; index not expected' unless cols.include?(:consolidation_candidate)
 
       expect(db.indexes(:memory_traces)).to have_key(:idx_memory_traces_consolidation)
     end
 
     it 'has index on source_agent_id if column exists' do
       cols = db.schema(:memory_traces).map(&:first)
-      next unless cols.include?(:source_agent_id)
+      skip 'memory_traces.source_agent_id column not present; index not expected' unless cols.include?(:source_agent_id)
 
       expect(db.indexes(:memory_traces)).to have_key(:idx_memory_traces_source_agent_id)
     end

@@ -8,7 +8,7 @@
 - Migration 052: drop redundant Apollo indexes (PG only) — auto-named duplicates from migration 012 superseded by explicit indexes in migration 047
 - Migration 053: FK constraint for `tasks.relationship_id` (PG only) with orphan cleanup and ON DELETE SET NULL
 - Migration 054: add `component_type` column to functions table (v3.0 naming convention — runner/hook/absorber)
-- Migration 055: add `definition` JSON column to functions table (v3.0 method contract storage)
+- Migration 055: add nullable `definition` text column to functions table (v3.0 method contract storage)
 - Migration 056: add `absorber_patterns` table for pattern-matched content acquisition (v3.0)
 - Migration 057: add `routing_key` column to runners table (v3.0 AMQP routing key storage)
 

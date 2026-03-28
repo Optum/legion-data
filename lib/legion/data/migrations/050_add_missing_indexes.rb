@@ -145,7 +145,7 @@ Sequel.migration do
 
       alter_table(table) do
         indexes.each do |idx_name|
-          drop_index [], name: idx_name, if_exists: true
+          drop_index nil, name: idx_name, if_exists: true
         end
       end
     end

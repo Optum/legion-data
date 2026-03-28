@@ -112,7 +112,7 @@ Legion::Data (singleton module)
 │       ├── 052_drop_redundant_apollo_idx   # PG only: remove duplicate auto-named indexes
 │       ├── 053_add_tasks_relationship_fk   # PG only: FK constraint on tasks.relationship_id
 │       ├── 054_add_component_type          # component_type on functions (runner/hook/absorber, v3.0)
-│       ├── 055_add_definition              # definition JSON column on functions (v3.0)
+│       ├── 055_add_definition              # definition text column on functions (v3.0)
 │       ├── 056_add_absorber_patterns       # absorber_patterns table for pattern-matched acquisition
 │       └── 057_add_routing_key             # routing_key on runners (v3.0 AMQP)
 │
