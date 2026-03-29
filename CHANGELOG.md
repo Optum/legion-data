@@ -1,5 +1,21 @@
 # Legion::Data Changelog
 
+## [1.6.13] - 2026-03-28
+
+### Added
+- `Legion::Data::AuditRecord` — tamper-evident audit record primitive with SHA-256 hash chain (closes #7)
+  - `append(chain_id:, content_type:, content_hash:, metadata: {}, sign: false)` — inserts a new record, linking it to the previous tail via `parent_hash` and `chain_hash`
+  - `verify(chain_id:)` — walks the chain and re-derives every hash, returning `{ valid:, length: }` or `{ valid: false, broken_at:, reason: }` on tampering
+  - `walk(chain_id:, since: nil, limit: 1000)` — return deserialized records in chronological order
+  - `query_by_type(content_type:, since: nil, limit: 100)` — cross-chain query by content_type
+  - `compute_chain_hash(parent_hash, content_hash, timestamp, content_type)` — public for independent verification
+  - Multiple independent chains share a single `audit_records` table, keyed by `chain_id`
+  - Chain hash formula: `SHA256("parent_hash:content_hash:unix_ns:content_type")` — timezone-independent via nanosecond epoch
+  - Optional signing via `Legion::Crypt.sign` when `sign: true`; signature column is nil when signing is unavailable
+- Migration 058: `audit_records` table with `chain_id`, `content_type`, `content_hash`, `parent_hash`, `chain_hash` (unique), `signature`, `metadata`, `created_at`; PostgreSQL `NO UPDATE/DELETE` rules for DB-level append-only enforcement
+- `Legion::Data::Model::AuditRecord` — Sequel model with `before_update`/`before_destroy` immutability guards and `parsed_metadata` helper
+- 29 new specs covering constant, hash computation, DB-unavailable guards, chain creation, chain verification, tamper detection, walk/query operations, and model immutability
+
 ## [1.6.12] - 2026-03-28
 
 ### Added

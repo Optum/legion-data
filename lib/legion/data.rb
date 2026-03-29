@@ -14,6 +14,7 @@ require_relative 'data/archiver'
 require_relative 'data/helper'
 require_relative 'data/rls'
 require_relative 'data/extract'
+require_relative 'data/audit_record'
 
 module Legion
   module Data
