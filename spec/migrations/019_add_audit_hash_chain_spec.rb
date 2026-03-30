@@ -46,7 +46,7 @@ RSpec.describe 'Migration 019: add audit hash chain columns' do
     # Use an isolated SQLite database so the rollback does not corrupt the shared
     # test database state (rolling back 40+ migrations in SQLite leaves stale
     # schema caches that cause "duplicate column" errors on the way back up).
-    let(:rollback_db_path) { File.join(Dir.tmpdir, "legion_test_rollback_#{Process.pid}.db") }
+    let(:rollback_db_path) { File.join(Dir.tmpdir, "legion_test_rollback_#{::Process.pid}.db") } # rubocop:disable Style/RedundantConstantBase
     let(:rollback_db) do
       db = Sequel.connect("sqlite://#{rollback_db_path}")
       Sequel::Migrator.run(db, migration_path, target: 19)
