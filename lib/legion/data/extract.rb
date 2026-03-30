@@ -41,7 +41,8 @@ module Legion
         end
 
         def register_handler(type, klass)
-          Handlers::Base.registry[type.to_sym] = klass
+          Handlers::Base.instance_variable_set(:@registry,
+                                               Handlers::Base.registry.merge(type.to_sym => klass).freeze)
         end
 
         private

@@ -22,7 +22,7 @@ module Legion
             end
 
             def register(handler_class)
-              @registry[handler_class.type] = handler_class
+              @registry = @registry.merge(handler_class.type => handler_class).freeze
             end
 
             def for_type(type)

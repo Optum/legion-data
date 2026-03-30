@@ -4,11 +4,7 @@ require 'spec_helper'
 
 RSpec.describe 'Migration 019: add audit hash chain columns' do
   let(:db) { Legion::Data::Connection.sequel }
-
-  before(:all) do
-    migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
-    Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 19)
-  end
+  let(:migration_path) { File.expand_path('../../lib/legion/data/migrations', __dir__) }
 
   describe 'audit_log table schema' do
     it 'has a previous_hash column' do
@@ -40,30 +36,41 @@ RSpec.describe 'Migration 019: add audit hash chain columns' do
 
   describe 'idempotency' do
     it 'does not raise when run twice' do
-      migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
       expect do
-        Sequel::Migrator.run(db, migration_path, target: 19)
+        Sequel::Migrator.run(db, migration_path)
       end.not_to raise_error
     end
   end
 
   describe 'rollback' do
-    before(:all) do
-      migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
-      Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 18)
+    # Use an isolated SQLite database so the rollback does not corrupt the shared
+    # test database state (rolling back 40+ migrations in SQLite leaves stale
+    # schema caches that cause "duplicate column" errors on the way back up).
+    let(:rollback_db_path) { File.join(Dir.tmpdir, "legion_test_rollback_#{Process.pid}.db") }
+    let(:rollback_db) do
+      db = Sequel.connect("sqlite://#{rollback_db_path}")
+      Sequel::Migrator.run(db, migration_path, target: 19)
+      db
+    end
+
+    after do
+      begin
+        rollback_db.disconnect
+      rescue StandardError
+        nil
+      end
+      FileUtils.rm_f(rollback_db_path)
+      FileUtils.rm_f("#{rollback_db_path}-journal")
     end
 
     it 'removes previous_hash on down' do
-      expect(Legion::Data::Connection.sequel.schema(:audit_log).map(&:first)).not_to include(:previous_hash)
+      Sequel::Migrator.run(rollback_db, migration_path, target: 18)
+      expect(rollback_db.schema(:audit_log).map(&:first)).not_to include(:previous_hash)
     end
 
     it 'removes retention_tier on down' do
-      expect(Legion::Data::Connection.sequel.schema(:audit_log).map(&:first)).not_to include(:retention_tier)
-    end
-
-    after(:all) do
-      migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
-      Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 19)
+      Sequel::Migrator.run(rollback_db, migration_path, target: 18)
+      expect(rollback_db.schema(:audit_log).map(&:first)).not_to include(:retention_tier)
     end
   end
 end
