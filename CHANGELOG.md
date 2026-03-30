@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.6.18] - 2026-03-30
+
+### Added
+- Migration 061: versioning and expiry columns on `apollo_entries` — `parent_knowledge_id` (UUID), `is_latest` (boolean, default true), `supersession_type` (VARCHAR 20), `expires_at` (timestamptz), `forget_reason` (VARCHAR 255), `is_inference` (boolean, default false) — postgres only
+- Migration 061: 4 named indexes including partial indexes: `idx_apollo_parent_knowledge`, `idx_apollo_version_chain` (partial WHERE is_latest), `idx_apollo_expiry` (partial WHERE expires_at IS NOT NULL), `idx_apollo_inference` (partial WHERE is_inference)
+- Spec for migration 061 covering column presence, types, nullability, defaults, all 4 indexes, and idempotency
+
 ## [1.6.17] - 2026-03-30
 
 ### Added
