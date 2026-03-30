@@ -1,5 +1,11 @@
 # Legion::Data Changelog
 
+## [1.6.14] - 2026-03-29
+
+### Added
+- Migration 059: `chains` table (id, name, active, created, updated) for workflow bundle chain tracking
+- `Legion::Data::Model::Chain` — Sequel model with `one_to_many :relationships` association
+
 ## [1.6.13] - 2026-03-28
 
 ### Added
