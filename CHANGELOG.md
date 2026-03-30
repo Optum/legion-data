@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.6.15] - 2026-03-29
+
 ### Added
 - `data_adapter` — current database adapter type (:sqlite, :mysql2, :postgres)
 - `data_pool_stats` — connection pool metrics (size, available, in_use, waiting)
