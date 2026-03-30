@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tmpdir'
+require 'fileutils'
 
 RSpec.describe 'Migration 019: add audit hash chain columns' do
   let(:db) { Legion::Data::Connection.sequel }
