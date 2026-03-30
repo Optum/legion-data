@@ -16,11 +16,15 @@ Sequel.migration do
 
     add_index :audit_log, :record_hash unless idxs.key?(:audit_log_record_hash_index)
 
-    # Rename prev_hash (introduced in migration 017) to previous_hash for clarity.
+    # Rename prev_hash (introduced in migration 017) to previous_hash for clarity,
+    # then widen it to 255 to match record_hash.
     if cols.include?(:prev_hash) && !cols.include?(:previous_hash)
       rename_column :audit_log, :prev_hash, :previous_hash
+      set_column_type :audit_log, :previous_hash, String, size: 255
     elsif !cols.include?(:previous_hash)
       alter_table(:audit_log) { add_column :previous_hash, String, size: 255 }
+    elsif cols.include?(:previous_hash)
+      set_column_type :audit_log, :previous_hash, String, size: 255
     end
 
     alter_table(:audit_log) { add_column :retention_tier, String, size: 10, default: 'hot' } unless cols.include?(:retention_tier)
@@ -35,9 +39,13 @@ Sequel.migration do
 
     drop_index :audit_log, :record_hash, if_exists: true
 
-    # Rename previous_hash back to prev_hash (reverse of the up rename).
+    # Restore record_hash to its original size (64 from migration 017).
+    set_column_type :audit_log, :record_hash, String, size: 64 if cols.include?(:record_hash)
+
+    # Rename previous_hash back to prev_hash (reverse of the up rename) and restore size to 64.
     if cols.include?(:previous_hash) && !cols.include?(:prev_hash)
       rename_column :audit_log, :previous_hash, :prev_hash
+      set_column_type :audit_log, :prev_hash, String, size: 64
     elsif cols.include?(:previous_hash)
       alter_table(:audit_log) { drop_column :previous_hash }
     end

@@ -52,8 +52,9 @@ RSpec.describe 'Migration 045: add memory_associations table' do
 
   it 'has a unique constraint on [trace_id_a, trace_id_b]' do
     indexes = db.indexes(:memory_associations)
+    expected_cols = %i[trace_id_a trace_id_b].sort
     unique_pair = indexes.values.find do |i|
-      i[:unique] && i[:columns].sort == %i[trace_id_a trace_id_b].sort
+      i[:unique] && i[:columns].sort == expected_cols
     end
     expect(unique_pair).not_to be_nil
   end

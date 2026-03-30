@@ -22,9 +22,9 @@ RSpec.describe 'Migration 019: add audit hash chain columns' do
     it 'retention_tier defaults to hot' do
       col = db.schema(:audit_log).find { |c| c.first == :retention_tier }
       expect(col).not_to be_nil
-      # SQLite may wrap the default in single quotes; strip them for comparison
-      default_val = col.last[:default].to_s.gsub(/\A'|'\z/, '')
-      expect(default_val).to eq('hot')
+      # Prefer ruby_default (normalized by Sequel); fall back to stripping raw default for older adapters
+      default_val = col.last[:ruby_default] || col.last[:default].to_s.gsub(/\A'|'\z/, '')
+      expect(default_val.to_s).to eq('hot')
     end
   end
 

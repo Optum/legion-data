@@ -128,7 +128,7 @@ module Legion
 end
 
 begin
-  Legion::Settings.merge_settings('data', Legion::Data::Settings.default) if Legion.const_defined?('Settings')
+  Legion::Settings.merge_settings('data', Legion::Data::Settings.default) if Legion.const_defined?('Settings', false)
 rescue StandardError => e
   Legion::Logging.fatal(e.message) if Legion::Logging.method_defined?(:fatal)
 end

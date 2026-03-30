@@ -10,6 +10,40 @@ jobs:
   ci:
     uses: LegionIO/.github/.github/workflows/ci.yml@main
 
+  ci-postgres:
+    name: "RSpec (PostgreSQL)"
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: legion
+          POSTGRES_PASSWORD: legion
+          POSTGRES_DB: legionio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Run RSpec (PostgreSQL adapter)
+        env:
+          LEGION_DATA_ADAPTER: postgres
+          LEGION_DATA_HOST: 127.0.0.1
+          LEGION_DATA_PORT: 5432
+          LEGION_DATA_USER: legion
+          LEGION_DATA_PASSWORD: legion
+          LEGION_DATA_DATABASE: legionio
+        run: bundle exec rspec
+
   lint:
     uses: LegionIO/.github/.github/workflows/lint-patterns.yml@main
 

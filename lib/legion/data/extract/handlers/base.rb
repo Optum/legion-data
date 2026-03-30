@@ -5,7 +5,7 @@ module Legion
     module Extract
       module Handlers
         class Base
-          @registry = {}
+          @registry = {}.freeze
 
           class << self
             attr_reader :registry
