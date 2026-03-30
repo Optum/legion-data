@@ -22,7 +22,7 @@ RSpec.describe Legion::Data::Model::AuditLog do
       duration_ms:    42,
       detail:         '{"task_id":1}',
       record_hash:    'a' * 64,
-      prev_hash:      '0' * 64,
+      previous_hash:  '0' * 64,
       created_at:     Time.now.utc
     }
   end

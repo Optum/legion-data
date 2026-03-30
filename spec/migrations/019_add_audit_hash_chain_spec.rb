@@ -22,7 +22,9 @@ RSpec.describe 'Migration 019: add audit hash chain columns' do
     it 'retention_tier defaults to hot' do
       col = db.schema(:audit_log).find { |c| c.first == :retention_tier }
       expect(col).not_to be_nil
-      expect(col.last[:default]).to eq('hot')
+      # SQLite may wrap the default in single quotes; strip them for comparison
+      default_val = col.last[:default].to_s.gsub(/\A'|'\z/, '')
+      expect(default_val).to eq('hot')
     end
   end
 
@@ -46,19 +48,22 @@ RSpec.describe 'Migration 019: add audit hash chain columns' do
   end
 
   describe 'rollback' do
-    it 'removes previous_hash on down' do
+    before(:all) do
       migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
-      Sequel::Migrator.run(db, migration_path, target: 18)
-      expect(db.schema(:audit_log).map(&:first)).not_to include(:previous_hash)
+      Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 18)
+    end
+
+    it 'removes previous_hash on down' do
+      expect(Legion::Data::Connection.sequel.schema(:audit_log).map(&:first)).not_to include(:previous_hash)
     end
 
     it 'removes retention_tier on down' do
-      expect(db.schema(:audit_log).map(&:first)).not_to include(:retention_tier)
+      expect(Legion::Data::Connection.sequel.schema(:audit_log).map(&:first)).not_to include(:retention_tier)
     end
 
     after(:all) do
       migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
-      Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path)
+      Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 19)
     end
   end
 end
