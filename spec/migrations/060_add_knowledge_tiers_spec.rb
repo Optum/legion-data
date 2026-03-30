@@ -117,6 +117,7 @@ RSpec.describe 'Migration 060: add knowledge tier columns to apollo_entries' do
     it 'is idempotent when run twice' do
       migration_path = File.expand_path('../../lib/legion/data/migrations', __dir__)
       expect do
+        Sequel::Migrator.run(db, migration_path, target: 59)
         Sequel::Migrator.run(db, migration_path, target: 60)
       end.not_to raise_error
     end
