@@ -1,5 +1,23 @@
 # Legion::Data Changelog
 
+## [Unreleased]
+
+## [1.6.15] - 2026-03-29
+
+### Added
+- `data_adapter` — current database adapter type (:sqlite, :mysql2, :postgres)
+- `data_pool_stats` — connection pool metrics (size, available, in_use, waiting)
+- `data_stats` — combined shared + local database statistics
+- `local_data_stats` — local SQLite database statistics
+- `data_can_read?(table_name)` — table read permission check
+- `data_can_write?(table_name)` — table write permission check
+
+## [1.6.14] - 2026-03-29
+
+### Added
+- Migration 059: `chains` table (id, name, active, created, updated) for workflow bundle chain tracking
+- `Legion::Data::Model::Chain` — Sequel model with `one_to_many :relationships` association
+
 ## [1.6.13] - 2026-03-28
 
 ### Added

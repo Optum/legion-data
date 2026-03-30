@@ -34,6 +34,52 @@ module Legion
       def local_data_model(table_name)
         Legion::Data::Local.model(table_name)
       end
+
+      # --- Pool / Resource Info ---
+
+      def data_adapter
+        Legion::Data::Connection.adapter
+      rescue StandardError
+        :unknown
+      end
+
+      def data_pool_stats
+        return {} unless data_connected?
+
+        Legion::Data::Connection.pool_stats
+      rescue StandardError
+        {}
+      end
+
+      def data_stats
+        return {} unless data_connected?
+
+        Legion::Data.stats
+      rescue StandardError
+        {}
+      end
+
+      def local_data_stats
+        return {} unless local_data_connected?
+
+        Legion::Data::Local.stats
+      rescue StandardError
+        {}
+      end
+
+      # --- Permission Helpers ---
+
+      def data_can_read?(table_name)
+        Legion::Data.can_read?(table_name)
+      rescue StandardError
+        false
+      end
+
+      def data_can_write?(table_name)
+        Legion::Data.can_write?(table_name)
+      rescue StandardError
+        false
+      end
     end
   end
 end
