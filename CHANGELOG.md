@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.6.17] - 2026-03-30
+
+### Added
+- Migration 060: L0/L1 summary columns on `apollo_entries` (`summary_l0` VARCHAR 500, `summary_l1` TEXT, `knowledge_tier` VARCHAR 4 default 'L2', `parent_entry_id` UUID, `l0_generated_at` timestamptz, `l1_generated_at` timestamptz) — postgres only
+- Migration 060: named indexes `idx_apollo_knowledge_tier` and `idx_apollo_parent_entry` on `apollo_entries`
+- Spec for migration 060 covering column presence, types, nullability, defaults, indexes, and idempotency
+
 ## [1.6.16] - 2026-03-30
 
 ### Fixed
