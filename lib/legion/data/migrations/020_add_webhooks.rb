@@ -34,4 +34,10 @@ Sequel.migration do
       DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
     end
   end
+
+  down do
+    drop_table?(:webhook_dead_letters)
+    drop_table?(:webhook_deliveries)
+    drop_table?(:webhooks)
+  end
 end

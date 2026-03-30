@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [1.6.16] - 2026-03-30
+
+### Fixed
+- Migration 019: widen `record_hash` column to size 255 via `set_column_type` (column added in migration 017)
+- Migration 019: rename `prev_hash` to `previous_hash` via `rename_column` instead of adding a duplicate column
+- Migration 019: decouple index creation from column existence checks so indexes are always guarded by their own `idxs.key?` check
+- Migration 019: `down` no longer drops `record_hash` (owned by migration 017, not 019)
+- Migration 019: replace `db.indexes` with bare `indexes()` — inside a `Sequel.migration` block `self` is the DB object, so `db` is undefined
+- Updated to rubocop-legion (`inherit_gem: config/core.yml`) for shared LegionIO cop configuration
+
+### Added
+- Migration 019 spec: 8 examples covering column presence, defaults, indexes, idempotency, and rollback
+
 ## [1.6.15] - 2026-03-29
 
 ### Added

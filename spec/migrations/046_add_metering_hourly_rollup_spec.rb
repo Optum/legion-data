@@ -36,8 +36,9 @@ RSpec.describe 'Migration 046: add metering_hourly_rollup table' do
 
   it 'has a unique index on [worker_id, provider, model_id, hour]' do
     indexes = db.indexes(:metering_hourly_rollup)
+    expected_cols = %i[hour model_id provider worker_id].sort
     unique_quad = indexes.values.find do |i|
-      i[:unique] && i[:columns].sort == %i[hour model_id provider worker_id].sort
+      i[:unique] && i[:columns].sort == expected_cols
     end
     expect(unique_quad).not_to be_nil
   end

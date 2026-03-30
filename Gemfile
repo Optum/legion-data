@@ -7,7 +7,7 @@ group :test do
   gem 'rake'
   gem 'rspec'
   gem 'rspec_junit_formatter'
-  gem 'rubocop'
+  gem 'rubocop-legion'
   gem 'simplecov'
 end
 gem 'mysql2', '>= 0.5.5'
