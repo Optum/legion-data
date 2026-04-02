@@ -27,17 +27,18 @@ module Legion
             opts[key] = val unless val.nil?
           end
 
-          opts[:logger] = build_local_logger
-          opts[:sql_log_level] = resolved_sql_log_level
-          opts[:log_warn_duration] = resolved_log_warn_duration
-
           if local_settings[:query_log]
             log_path = File.join(Legion::Data::Connection::QUERY_LOG_DIR, 'data-local-query.log')
             @query_file_logger = Legion::Data::Connection::QueryFileLogger.new(log_path)
+            opts[:logger]          = @query_file_logger
+            opts[:sql_log_level]   = :debug
+          elsif data[:log] && defined?(Legion::Logging)
+            opts[:logger]          = build_local_logger
+            opts[:sql_log_level]   = resolved_sql_log_level
+            opts[:log_warn_duration] = resolved_log_warn_duration
           end
 
           @connection = ::Sequel.connect(opts)
-          @connection.loggers << @query_file_logger if @query_file_logger
           @connected = true
           run_migrations
           log.info "Legion::Data::Local connected to #{db_file}"
