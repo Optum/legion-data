@@ -15,9 +15,11 @@ module Legion
             reader = ::PDF::Reader.new(source)
             text = reader.pages.map(&:text).join("\n\n")
             { text: text, metadata: { pages: reader.page_count, title: reader.info[:Title] } }
-          rescue LoadError
+          rescue LoadError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_pdf, gem: gem_name)
             { text: nil, error: :gem_not_installed, gem: gem_name }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_pdf)
             { text: nil, error: e.message }
           end
         end

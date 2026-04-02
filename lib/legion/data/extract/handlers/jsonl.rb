@@ -17,6 +17,7 @@ module Legion
             text = lines.map { |l| l.is_a?(Hash) ? ::JSON.pretty_generate(l) : l }.join("\n---\n")
             { text: text, metadata: { lines: lines.size } }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_jsonl)
             { text: nil, error: e.message }
           end
         end

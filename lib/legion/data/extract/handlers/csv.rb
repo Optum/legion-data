@@ -17,6 +17,7 @@ module Legion
             text = table.map { |row| row.to_h.map { |k, v| "#{k}: #{v}" }.join(', ') }.join("\n")
             { text: text, metadata: { rows: table.size, columns: table.headers.size, headers: table.headers } }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_csv)
             { text: nil, error: e.message }
           end
         end

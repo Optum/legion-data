@@ -15,6 +15,7 @@ module Legion
             text = content.sub(/\A---\n.*?\n---\n/m, '')
             { text: text.strip, metadata: { bytes: content.bytesize, has_frontmatter: content != text } }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_markdown)
             { text: nil, error: e.message }
           end
         end

@@ -17,6 +17,7 @@ module Legion
             text = ::JSON.pretty_generate(parsed)
             { text: text, metadata: { keys: parsed.is_a?(Hash) ? parsed.keys : nil } }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_json)
             { text: nil, error: e.message }
           end
         end
