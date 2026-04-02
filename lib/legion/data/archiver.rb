@@ -202,7 +202,7 @@ module Legion
           handle_exception(e, level: :error, handled: false, operation: :upload_azure, table: table, year: year, month: month, batch_n: batch_n)
           raise
         rescue StandardError => e
-          handle_exception(e, level: :error, handled: true, operation: :upload_azure, table: table, year: year, month: month, batch_n: batch_n)
+          handle_exception(e, level: :error, handled: false, operation: :upload_azure, table: table, year: year, month: month, batch_n: batch_n)
           raise UploadError, "Azure upload failed: #{e.message}"
         end
 
