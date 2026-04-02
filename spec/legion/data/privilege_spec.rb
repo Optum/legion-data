@@ -75,6 +75,7 @@ RSpec.describe 'Legion::Data privilege checks' do
     end
 
     it 'returns false on error' do
+      allow(Legion::Settings).to receive(:[]).and_return({})
       allow(Legion::Settings).to receive(:[]).with(:data).and_raise(StandardError)
       expect(Legion::Data.connected?).to be false
     end

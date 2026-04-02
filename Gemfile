@@ -3,6 +3,8 @@
 source 'https://rubygems.org'
 
 gemspec
+gem 'legion-logging', git: 'https://github.com/LegionIO/legion-logging.git', tag: 'v1.5.0'
+
 group :test do
   gem 'rake'
   gem 'rspec'
