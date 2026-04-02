@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Model
       class AuditRecord < Sequel::Model(:audit_records)
+        include Legion::Logging::Helper
+
         # Enforce append-only semantics at the application layer.
         # PostgreSQL enforces this at the DB layer via rules (migration 058);
         # the application guard covers SQLite and MySQL.
@@ -21,7 +25,7 @@ module Legion
 
           Legion::JSON.load(metadata)
         rescue StandardError => e
-          Legion::Logging.warn "AuditRecord#parsed_metadata failed: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :parsed_metadata, id: self[:id])
           {}
         end
       end

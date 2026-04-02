@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Model
       class AuditLog < Sequel::Model(:audit_log)
+        include Legion::Logging::Helper
+
         VALID_EVENT_TYPES = %w[runner_execution lifecycle_transition].freeze
         VALID_STATUSES    = %w[success failure denied].freeze
 
@@ -18,7 +22,7 @@ module Legion
 
           Legion::JSON.load(detail)
         rescue StandardError => e
-          Legion::Logging.warn("AuditLog#parsed_detail JSON parse failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :parsed_detail, id: self[:id])
           nil
         end
 
