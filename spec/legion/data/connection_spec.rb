@@ -42,6 +42,7 @@ RSpec.describe 'Legion::Data::Connection' do
     expect(Legion::Data::Connection.sequel.loggers).to be_a Array
     expect(Legion::Data::Connection.sequel.loggers.count).to be > 0
     expect(Legion::Data::Connection.sequel.loggers.first).to be_a Legion::Data::Connection::SlowQueryLogger
+    expect(Legion::Data::Connection.sequel.loggers.first.tagged.segments).to eq(%w[data connection])
   end
 
   it 'uses other things' do

@@ -93,7 +93,7 @@ module Legion
             oldest_archived: oldest_archived
           }
         rescue StandardError => e
-          handle_exception(e, level: :warn, handled: true, operation: :retention_status, table: table, date_column: date_column)
+          handle_exception(e, level: :warn, handled: false, operation: :retention_status, table: table, date_column: date_column)
           raise
         end
 

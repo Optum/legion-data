@@ -283,9 +283,8 @@ RSpec.describe Legion::Data::PartitionManager do
       allow(mock_db).to receive(:fetch).and_return([])
     end
 
-    it 'does not raise when Legion::Logging is not defined' do
-      # Hide Legion::Logging from the constant lookup without actually removing it
-      allow(described_class).to receive(:logging?).and_return(false)
+    it 'does not raise when log helper is available' do
+      allow(described_class).to receive(:log).and_return(instance_double('Legion::Logging::TaggedLogger', info: nil))
 
       expect { described_class.ensure_partitions(table: :events, months_ahead: 1) }.not_to raise_error
       expect { described_class.drop_old_partitions(table: :events, retention_months: 24) }.not_to raise_error
