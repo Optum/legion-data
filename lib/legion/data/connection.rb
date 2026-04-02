@@ -154,7 +154,7 @@ module Legion
 
         def setup
           opts = sequel_opts
-          log.info { "Legion::Data::Connection setup adapter=#{adapter}" }
+          log.info("Legion::Data::Connection setup adapter=#{adapter}")
           @sequel = if adapter == :sqlite
                       ::Sequel.connect(opts.merge(adapter: :sqlite, database: sqlite_path))
                     else
