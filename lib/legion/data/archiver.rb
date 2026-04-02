@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require 'digest'
 require 'fileutils'
 require 'json'
@@ -13,62 +14,41 @@ module Legion
       class UploadError < StandardError; end
 
       class << self
+        include Legion::Logging::Helper
+
         def archive_table(table:, retention_days: 90, batch_size: 1000, storage_backend: nil)
           return { skipped: true, reason: 'not_postgres' } unless postgres?
 
-          Legion::Logging.info "Archiving table #{table} (retention: #{retention_days}d)" if defined?(Legion::Logging)
+          log.info "Archiving table #{table} (retention: #{retention_days}d)"
 
           conn = Legion::Data.connection
           cutoff = Time.now - (retention_days * 86_400)
-          now = Time.now.utc
+          archive_results = archive_batches(
+            conn:            conn,
+            table:           table,
+            cutoff:          cutoff,
+            batch_size:      batch_size,
+            storage_backend: storage_backend
+          )
 
-          batches = 0
-          total_rows = 0
-          paths = []
-          batch_n = 0
-
-          loop do
-            batch_n += 1
-            rows = conn[table].where { created_at < cutoff }.limit(batch_size).all
-            break if rows.empty?
-
-            ids = rows.map { |r| r[:id] }
-            jsonl = serialize_rows(rows)
-            compressed = gzip_compress(jsonl)
-            checksum = Digest::SHA256.hexdigest(compressed)
-            batch_id = SecureRandom.uuid
-
-            path = upload_batch(
-              data:    compressed,
-              table:   table.to_s,
-              year:    now.year,
-              month:   now.month,
-              batch_n: batch_n,
-              backend: storage_backend
-            )
-
-            conn.transaction do
-              conn[:archive_manifest].insert(
-                batch_id:     batch_id,
-                source_table: table.to_s,
-                row_count:    rows.size,
-                checksum:     checksum,
-                storage_path: path,
-                archived_at:  now
-              )
-              conn[table].where(id: ids).delete
-            end
-
-            batches += 1
-            total_rows += rows.size
-            paths << path
-          end
-
-          Legion::Logging.info "Archived #{total_rows} rows from #{table} in #{batches} batch(es)" if defined?(Legion::Logging)
-          { batches: batches, total_rows: total_rows, paths: paths }
+          log.info "Archived #{archive_results[:total_rows]} rows from #{table} in #{archive_results[:batches]} batch(es)"
+          archive_results
+        rescue StandardError => e
+          handle_exception(
+            e,
+            level:           :error,
+            handled:         false,
+            operation:       :archive_table,
+            table:           table,
+            retention_days:  retention_days,
+            batch_size:      batch_size,
+            storage_backend: storage_backend
+          )
+          raise
         end
 
         def upload_batch(data:, table:, year:, month:, batch_n:, backend:)
+          log.info "Archiver storing batch table=#{table} backend=#{backend || :tmpdir} year=#{year} month=#{month} batch=#{batch_n}"
           case backend
           when :s3
             upload_s3(data: data, table: table, year: year, month: month, batch_n: batch_n)
@@ -111,6 +91,72 @@ module Legion
           rows.map { |row| json_dump(row) }.join("\n")
         end
 
+        def archive_batches(conn:, table:, cutoff:, batch_size:, storage_backend:)
+          now = Time.now.utc
+          batches = 0
+          total_rows = 0
+          paths = []
+
+          loop do
+            batch_result = archive_batch(
+              conn:            conn,
+              table:           table,
+              cutoff:          cutoff,
+              batch_size:      batch_size,
+              batch_n:         batches + 1,
+              now:             now,
+              storage_backend: storage_backend
+            )
+            break unless batch_result
+
+            batches += 1
+            total_rows += batch_result[:row_count]
+            paths << batch_result[:path]
+          end
+
+          { batches: batches, total_rows: total_rows, paths: paths }
+        end
+
+        def archive_batch(conn:, table:, cutoff:, batch_size:, batch_n:, now:, storage_backend:)
+          rows = conn[table].where { created_at < cutoff }.limit(batch_size).all
+          return if rows.empty?
+
+          compressed = gzip_compress(serialize_rows(rows))
+          path = upload_batch(
+            data:    compressed,
+            table:   table.to_s,
+            year:    now.year,
+            month:   now.month,
+            batch_n: batch_n,
+            backend: storage_backend
+          )
+
+          record_archived_batch(
+            conn:       conn,
+            table:      table,
+            rows:       rows,
+            compressed: compressed,
+            path:       path,
+            now:        now
+          )
+
+          { row_count: rows.size, path: path }
+        end
+
+        def record_archived_batch(conn:, table:, rows:, compressed:, path:, now:)
+          conn.transaction do
+            conn[:archive_manifest].insert(
+              batch_id:     SecureRandom.uuid,
+              source_table: table.to_s,
+              row_count:    rows.size,
+              checksum:     Digest::SHA256.hexdigest(compressed),
+              storage_path: path,
+              archived_at:  now
+            )
+            conn[table].where(id: rows.map { |row| row[:id] }).delete
+          end
+        end
+
         def json_dump(obj)
           if defined?(Legion::JSON)
             Legion::JSON.dump(obj)
@@ -133,11 +179,13 @@ module Legion
 
           key = "legion-archive/#{table}/#{year}/#{month}/batch_#{batch_n}.jsonl.gz"
           Legion::Extensions::S3::Runners::Put.run(key: key, body: data)
+          log.info "Archiver uploaded batch to s3 key=#{key}"
           "s3://#{key}"
-        rescue UploadError
+        rescue UploadError => e
+          handle_exception(e, level: :error, handled: false, operation: :upload_s3, table: table, year: year, month: month, batch_n: batch_n)
           raise
         rescue StandardError => e
-          Legion::Logging.warn "S3 upload failed: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :error, handled: true, operation: :upload_s3, table: table, year: year, month: month, batch_n: batch_n)
           raise UploadError, "S3 upload failed: #{e.message}"
         end
 
@@ -148,11 +196,13 @@ module Legion
 
           blob_name = "legion-archive/#{table}/#{year}/#{month}/batch_#{batch_n}.jsonl.gz"
           Legion::Extensions::AzureStorage::Runners::Upload.run(blob_name: blob_name, data: data)
+          log.info "Archiver uploaded batch to azure blob=#{blob_name}"
           "azure://#{blob_name}"
-        rescue UploadError
+        rescue UploadError => e
+          handle_exception(e, level: :error, handled: false, operation: :upload_azure, table: table, year: year, month: month, batch_n: batch_n)
           raise
         rescue StandardError => e
-          Legion::Logging.warn "Azure upload failed: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :error, handled: true, operation: :upload_azure, table: table, year: year, month: month, batch_n: batch_n)
           raise UploadError, "Azure upload failed: #{e.message}"
         end
 
@@ -161,8 +211,10 @@ module Legion
           FileUtils.mkdir_p(dir)
           path = File.join(dir, "batch_#{batch_n}.jsonl.gz")
           File.binwrite(path, data)
+          log.info "Archiver stored batch locally path=#{path}"
           "file://#{path}"
         rescue StandardError => e
+          handle_exception(e, level: :error, handled: true, operation: :upload_tmpdir, table: table, year: year, month: month, batch_n: batch_n)
           raise UploadError, "Tmpdir upload failed: #{e.message}"
         end
       end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 require 'fileutils'
 require 'sequel'
 
@@ -28,6 +30,8 @@ module Legion
       # Prefixes warn-level messages with [slow-query] since Sequel uses warn
       # for queries exceeding log_warn_duration.
       class SlowQueryLogger
+        attr_reader :tagged
+
         def initialize(tagged_logger)
           @tagged = tagged_logger
         end
@@ -49,9 +53,52 @@ module Legion
         end
       end
 
+      class SegmentedTaggedLogger
+        attr_reader :segments
+
+        def initialize(segments:, logger: nil)
+          @segments = segments
+          @logger = logger || Legion::Logging
+        end
+
+        def warn(message)
+          with_segments { dispatch(:warn, message) }
+        end
+
+        def info(message)
+          with_segments { dispatch(:info, message) }
+        end
+
+        def debug(message)
+          with_segments { dispatch(:debug, message) }
+        end
+
+        def error(message)
+          with_segments { dispatch(:error, message) }
+        end
+
+        private
+
+        def dispatch(level, message)
+          return unless @logger.respond_to?(level)
+
+          @logger.public_send(level, message)
+        end
+
+        def with_segments
+          previous = Thread.current[:legion_log_segments]
+          Thread.current[:legion_log_segments] = @segments
+          yield
+        ensure
+          Thread.current[:legion_log_segments] = previous
+        end
+      end
+
       # File-based query logger that writes all SQL to a dedicated log file.
       # Isolated from the main Legion::Logging domain.
       class QueryFileLogger
+        include Legion::Logging::Helper
+
         attr_reader :path
 
         def initialize(path)
@@ -90,12 +137,15 @@ module Legion
           @mutex.synchronize do
             @file.puts "[#{Time.now.strftime('%Y-%m-%d %H:%M:%S.%L')}] #{level} #{message}"
           end
-        rescue IOError
+        rescue IOError => e
+          handle_exception(e, level: :warn, handled: true, operation: :query_file_write, path: @path)
           nil
         end
       end
 
       class << self
+        include Legion::Logging::Helper
+
         attr_accessor :sequel
 
         def adapter
@@ -104,6 +154,7 @@ module Legion
 
         def setup
           opts = sequel_opts
+          log.info { "Legion::Data::Connection setup adapter=#{adapter}" }
           @sequel = if adapter == :sqlite
                       ::Sequel.connect(opts.merge(adapter: :sqlite, database: sqlite_path))
                     else
@@ -112,18 +163,14 @@ module Legion
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        if defined?(Legion::Logging)
-                          Legion::Logging.warn(
-                            "Shared DB unreachable (#{e.message}), dev_mode fallback to SQLite"
-                          )
-                        end
+                        handle_exception(e, level: :warn, handled: true, operation: :shared_connect, fallback: :sqlite)
                         @adapter = :sqlite
                         sqlite_opts = sequel_opts
                         ::Sequel.connect(sqlite_opts.merge(adapter: :sqlite, database: sqlite_path))
                       end
                     end
           Legion::Settings[:data][:connected] = true
-          log_connection_info if defined?(Legion::Logging)
+          log_connection_info
           configure_extensions
           connect_with_replicas
         end
@@ -140,6 +187,7 @@ module Legion
             database:  database_stats
           }
         rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :data_connection_stats, adapter: adapter)
           { connected: (data[:connected] if data.is_a?(Hash)), adapter: adapter, error: e.message }
         end
 
@@ -171,7 +219,8 @@ module Legion
           end
 
           stats.compact
-        rescue StandardError
+        rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :data_pool_stats, adapter: adapter)
           {}
         end
 
@@ -180,7 +229,7 @@ module Legion
           @query_file_logger&.close
           @query_file_logger = nil
           Legion::Settings[:data][:connected] = false
-          Legion::Logging.info 'Legion::Data connection closed' if defined?(Legion::Logging)
+          log.info 'Legion::Data connection closed'
         end
 
         def connect_with_replicas
@@ -202,7 +251,7 @@ module Legion
           end
 
           @replica_servers = replica_list.each_with_index.map { |_, idx| :"read_#{idx}" }
-          Legion::Logging.debug "Registered #{@replica_servers.size} read replica(s)" if defined?(Legion::Logging)
+          log.debug "Registered #{@replica_servers.size} read replica(s)"
         end
 
         def read_server
@@ -258,20 +307,20 @@ module Legion
 
           Legion::Settings[:data][:tls] || {}
         rescue StandardError => e
-          Legion::Logging.debug("Connection#data_tls_settings failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :data_tls_settings)
           {}
         end
 
         def log_connection_info
           if adapter == :sqlite
-            Legion::Logging.info "Connected to SQLite at #{sqlite_path}"
+            log.info "Connected to SQLite at #{sqlite_path}"
           else
             actual = Legion::Settings[:data][:creds] || {}
             user = actual[:user] || actual[:username] || 'unknown'
             host = actual[:host] || '127.0.0.1'
             port = actual[:port]
             db   = actual[:database] || actual[:db]
-            Legion::Logging.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
+            log.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
           end
         end
 
@@ -356,6 +405,7 @@ module Legion
           else {}
           end
         rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :data_database_stats, adapter: adapter)
           { error: e.message }
         end
 
@@ -366,7 +416,8 @@ module Legion
              cache_size busy_timeout].each do |pragma|
             val = begin
               db.fetch("PRAGMA #{pragma}").single_value
-            rescue StandardError
+            rescue StandardError => e
+              handle_exception(e, level: :warn, handled: true, operation: :sqlite_stats_pragma, pragma: pragma)
               nil
             end
             stats[pragma.to_sym] = val unless val.nil?
@@ -457,12 +508,26 @@ module Legion
             @sequel.pool.connection_expiration_timeout = data[:connection_expiration_timeout] || 14_400
           end
         rescue StandardError => e
-          Legion::Logging.warn "Failed to load connection extensions: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :configure_extensions, adapter: adapter)
         end
 
         def build_data_logger
-          tagged = Legion::Logging::Logger.new(lex: 'data')
+          tagged = if defined?(Legion::Logging::TaggedLogger) && respond_to?(:tagged_logger_settings, true)
+                     Legion::Logging::TaggedLogger.new(
+                       segments: %w[data connection],
+                       **send(:tagged_logger_settings)
+                     )
+                   else
+                     SegmentedTaggedLogger.new(segments: %w[data connection])
+                   end
           SlowQueryLogger.new(tagged)
+        rescue StandardError => e
+          if respond_to?(:handle_exception, true)
+            handle_exception(e, level: :warn, handled: true, operation: :build_data_logger)
+          else
+            log.warn("build_data_logger failed: #{e.class}: #{e.message}")
+          end
+          SlowQueryLogger.new(SegmentedTaggedLogger.new(segments: %w[data connection], logger: log))
         end
       end
     end

@@ -263,13 +263,12 @@ RSpec.describe Legion::Data::PartitionManager do
         fetch_calls == 1 ? [] : [{ name: 'events_y2025m01' }]
       end
 
-      logging_double = double('Legion::Logging')
-      allow(logging_double).to receive(:info)
-      stub_const('Legion::Logging', logging_double)
+      logger = instance_double('Legion::Logging::TaggedLogger', info: nil)
+      allow(described_class).to receive(:log).and_return(logger)
 
       described_class.ensure_partitions(table: :events, months_ahead: 1)
 
-      expect(logging_double).to have_received(:info).at_least(:once)
+      expect(logger).to have_received(:info).at_least(:once)
     end
   end
 

@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module PartitionManager
       NOT_POSTGRES = { skipped: true, reason: 'not_postgres' }.freeze
 
       class << self
+        include Legion::Logging::Helper
+
         def ensure_partitions(table:, months_ahead: 3)
           return NOT_POSTGRES unless postgres?
 
@@ -28,16 +32,17 @@ module Legion
             after_count = partition_names_for(table).size
 
             if after_count > before_count
-              log_info("Created partition #{partition}") if logging?
+              log.info("Created partition #{partition}")
               created << partition
             else
               existing << partition
             end
           end
 
+          log.info "PartitionManager ensure_partitions table=#{table} created=#{created.size} existing=#{existing.size}"
           { created: created, existing: existing }
         rescue StandardError => e
-          log_warn("ensure_partitions failed for #{table}: #{e.message}") if logging?
+          handle_exception(e, level: :warn, handled: true, operation: :ensure_partitions, table: table, months_ahead: months_ahead)
           { created: [], existing: [], error: e.message }
         end
 
@@ -54,16 +59,17 @@ module Legion
 
             if part_date < cutoff
               Legion::Data.connection.run("DROP TABLE #{part}")
-              log_info("Dropped partition #{part}") if logging?
+              log.info("Dropped partition #{part}")
               dropped << part
             else
               retained << part
             end
           end
 
+          log.info "PartitionManager drop_old_partitions table=#{table} dropped=#{dropped.size} retained=#{retained.size}"
           { dropped: dropped, retained: retained }
         rescue StandardError => e
-          log_warn("drop_old_partitions failed for #{table}: #{e.message}") if logging?
+          handle_exception(e, level: :warn, handled: true, operation: :drop_old_partitions, table: table, retention_months: retention_months)
           { dropped: [], retained: [], error: e.message }
         end
 
@@ -80,12 +86,14 @@ module Legion
             ORDER  BY c.relname
           SQL
 
-          Legion::Data.connection.fetch(sql).map do |row|
+          partitions = Legion::Data.connection.fetch(sql).map do |row|
             from_val, to_val = parse_bound(row[:bound])
             { name: row[:name], from: from_val, to: to_val }
           end
+          log.info "PartitionManager list_partitions table=#{table} count=#{partitions.size}"
+          partitions
         rescue StandardError => e
-          log_warn("list_partitions failed for #{table}: #{e.message}") if logging?
+          handle_exception(e, level: :warn, handled: true, operation: :list_partitions, table: table)
           []
         end
 
@@ -93,18 +101,6 @@ module Legion
 
         def postgres?
           Legion::Data::Connection.adapter == :postgres
-        end
-
-        def logging?
-          defined?(Legion::Logging)
-        end
-
-        def log_info(msg)
-          Legion::Logging.info(msg)
-        end
-
-        def log_warn(msg)
-          Legion::Logging.warn(msg)
         end
 
         def partition_name(table, date)
@@ -136,7 +132,7 @@ module Legion
 
           Legion::Data.connection.fetch(sql).map { |row| row[:name] }
         rescue StandardError => e
-          log_warn("partition_names_for #{table} failed: #{e.message}") if logging?
+          handle_exception(e, level: :warn, handled: true, operation: :partition_names_for, table: table)
           []
         end
 

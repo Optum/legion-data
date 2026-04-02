@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require 'json'
 require 'fileutils'
 require 'securerandom'
@@ -31,6 +32,8 @@ module Legion
       end
 
       class ScopedSpool
+        include Legion::Logging::Helper
+
         def initialize(extension_module, spool_root)
           @extension_dir = File.join(spool_root, Spool.send(:extension_path, extension_module))
         end
@@ -41,24 +44,34 @@ module Legion
           filename = "#{Time.now.strftime('%s%9N')}-#{SecureRandom.uuid}.json"
           path = File.join(dir, filename)
           File.write(path, ::JSON.generate(payload))
-          Legion::Logging.debug "Spool write: #{sub_namespace} -> #{filename}" if defined?(Legion::Logging)
+          log.info "Spool write: #{sub_namespace} -> #{filename}"
           path
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :spool_write, sub_namespace: sub_namespace)
+          raise
         end
 
         def read(sub_namespace)
           sorted_files(sub_namespace).map { |f| ::JSON.parse(File.read(f), symbolize_names: true) }
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :spool_read, sub_namespace: sub_namespace)
+          raise
         end
 
         def flush(sub_namespace)
           count = 0
+          path = nil
           sorted_files(sub_namespace).each do |path|
             event = ::JSON.parse(File.read(path), symbolize_names: true)
             yield event
             File.delete(path)
             count += 1
           end
-          Legion::Logging.info "Spool drained #{count} item(s) from #{sub_namespace}" if defined?(Legion::Logging) && count.positive?
+          log.info "Spool drained #{count} item(s) from #{sub_namespace}" if count.positive?
           count
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :spool_flush, sub_namespace: sub_namespace, path: path)
+          raise
         end
 
         def count(sub_namespace)
@@ -70,6 +83,10 @@ module Legion
           return unless Dir.exist?(dir)
 
           Dir[File.join(dir, '*.json')].each { |f| File.delete(f) }
+          log.info "Spool cleared #{sub_namespace}"
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :spool_clear, sub_namespace: sub_namespace)
+          raise
         end
 
         private

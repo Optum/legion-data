@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module StorageTiers
       TIERS = { hot: 0, warm: 1, cold: 2 }.freeze
 
       class << self
+        include Legion::Logging::Helper
+
         def archive_to_warm(table:, age_days: 90, batch_size: 1000)
           return { archived: 0, reason: 'no_connection' } unless Legion::Data.connection
           return { archived: 0, reason: 'no_archive_table' } unless Legion::Data.connection.table_exists?(:data_archive)
@@ -28,8 +32,11 @@ module Legion
             Legion::Data.connection[table].where(id: ids).delete
           end
 
-          Legion::Logging.info "Archived #{records.size} row(s) from #{table} to warm tier" if defined?(Legion::Logging)
+          log.info "Archived #{records.size} row(s) from #{table} to warm tier"
           { archived: records.size, table: table.to_s }
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :archive_to_warm, table: table, age_days: age_days, batch_size: batch_size)
+          raise
         end
 
         def export_to_cold(age_days: 365, batch_size: 5000)
@@ -44,14 +51,20 @@ module Legion
 
           ids = records.map { |r| r[:id] }
           Legion::Data.connection[:data_archive].where(id: ids).update(tier: TIERS[:cold])
-          Legion::Logging.info "Exported #{records.size} row(s) to cold tier" if defined?(Legion::Logging)
+          log.info "Exported #{records.size} row(s) to cold tier"
           { exported: records.size, data: records }
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :export_to_cold, age_days: age_days, batch_size: batch_size)
+          raise
         end
 
         def stats
           return {} unless Legion::Data.connection&.table_exists?(:data_archive)
 
           { warm: count_tier(:warm), cold: count_tier(:cold) }
+        rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :storage_tiers_stats)
+          {}
         end
 
         private
@@ -59,7 +72,7 @@ module Legion
         def count_tier(tier)
           Legion::Data.connection[:data_archive].where(tier: TIERS[tier]).count
         rescue StandardError => e
-          Legion::Logging.debug("StorageTiers#count_tier failed for #{tier}: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :storage_tiers_count, tier: tier)
           0
         end
       end

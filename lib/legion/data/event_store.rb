@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require 'digest'
 
 module Legion
@@ -14,6 +15,8 @@ module Legion
       ].freeze
 
       class << self
+        include Legion::Logging::Helper
+
         def append(stream:, type:, data: {}, metadata: {})
           return { error: 'db unavailable' } unless db_ready?
 
@@ -42,7 +45,7 @@ module Legion
               created_at:      Time.now
             )
 
-            Legion::Logging.debug "EventStore append: stream=#{stream} type=#{type} seq=#{seq}" if defined?(Legion::Logging)
+            log.debug "EventStore append: stream=#{stream} type=#{type} seq=#{seq}"
             { stream: stream, sequence: seq, hash: event_hash }
           end
         end
@@ -75,11 +78,11 @@ module Legion
           events.each do |e|
             expected = compute_hash(stream, e[:sequence_number], e[:event_type], e[:data_json], prev_hash)
             unless e[:event_hash] == expected
-              Legion::Logging.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}" if defined?(Legion::Logging)
+              log.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}"
               return { valid: false, broken_at: e[:sequence_number] }
             end
             unless e[:previous_hash] == prev_hash
-              Legion::Logging.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}" if defined?(Legion::Logging)
+              log.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}"
               return { valid: false, broken_at: e[:sequence_number] }
             end
 
@@ -111,7 +114,7 @@ module Legion
         def db_ready?
           defined?(Legion::Data) && Legion::Data.connection&.table_exists?(:governance_events)
         rescue StandardError => e
-          Legion::Logging.debug("EventStore#db_ready? check failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :event_store_db_ready?)
           false
         end
       end

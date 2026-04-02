@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Settings
+      extend Legion::Logging::Helper
+
       CREDS = {
         sqlite:   {
           database: 'legionio.db'
@@ -130,5 +134,5 @@ end
 begin
   Legion::Settings.merge_settings('data', Legion::Data::Settings.default) if Legion.const_defined?('Settings', false)
 rescue StandardError => e
-  Legion::Logging.fatal(e.message) if Legion::Logging.method_defined?(:fatal)
+  Legion::Data::Settings.handle_exception(e, level: :fatal, operation: :merge_settings)
 end

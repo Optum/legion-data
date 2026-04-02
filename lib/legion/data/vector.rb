@@ -1,16 +1,20 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Vector
       class << self
+        include Legion::Logging::Helper
+
         def available?
           return false unless Legion::Data.connection
           return false unless Legion::Data.connection.adapter_scheme == :postgres
 
           Legion::Data.connection.fetch("SELECT 1 FROM pg_extension WHERE extname = 'vector'").any?
         rescue StandardError => e
-          Legion::Logging.debug("Vector#available? check failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :vector_available?)
           false
         end
 
@@ -18,17 +22,17 @@ module Legion
           return false unless Legion::Data.connection&.adapter_scheme == :postgres
 
           Legion::Data.connection.run('CREATE EXTENSION IF NOT EXISTS vector')
-          Legion::Logging.info 'pgvector extension enabled' if defined?(Legion::Logging)
+          log.info 'pgvector extension enabled'
           true
         rescue StandardError => e
-          Legion::Logging.warn("pgvector extension creation failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :ensure_vector_extension)
           false
         end
 
         def cosine_search(table:, column:, query_vector:, limit: 10, min_similarity: 0.0)
           return [] unless available?
 
-          Legion::Logging.debug "Vector cosine_search: table=#{table} column=#{column} limit=#{limit}" if defined?(Legion::Logging)
+          log.debug "Vector cosine_search: table=#{table} column=#{column} limit=#{limit}"
           vec_literal = vector_literal(query_vector)
           ds = Legion::Data.connection[table]
                            .select_all
@@ -43,7 +47,7 @@ module Legion
         def l2_search(table:, column:, query_vector:, limit: 10)
           return [] unless available?
 
-          Legion::Logging.debug "Vector l2_search: table=#{table} column=#{column} limit=#{limit}" if defined?(Legion::Logging)
+          log.debug "Vector l2_search: table=#{table} column=#{column} limit=#{limit}"
           vec_literal = vector_literal(query_vector)
           Legion::Data.connection[table]
                       .select_all

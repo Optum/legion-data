@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 require 'sequel'
 require 'sequel/extensions/migration'
 
@@ -7,6 +9,8 @@ module Legion
   module Data
     module Local
       class << self
+        include Legion::Logging::Helper
+
         attr_reader :connection, :db_path
 
         def setup(database: nil, **)
@@ -23,17 +27,23 @@ module Legion
             opts[key] = val unless val.nil?
           end
 
+          opts[:logger] = build_local_logger
+          opts[:sql_log_level] = resolved_sql_log_level
+          opts[:log_warn_duration] = resolved_log_warn_duration
+
           if local_settings[:query_log]
             log_path = File.join(Legion::Data::Connection::QUERY_LOG_DIR, 'data-local-query.log')
             @query_file_logger = Legion::Data::Connection::QueryFileLogger.new(log_path)
-            opts[:logger]        = @query_file_logger
-            opts[:sql_log_level] = :debug
           end
 
           @connection = ::Sequel.connect(opts)
+          @connection.loggers << @query_file_logger if @query_file_logger
           @connected = true
           run_migrations
-          Legion::Logging.info "Legion::Data::Local connected to #{db_file}" if defined?(Legion::Logging)
+          log.info "Legion::Data::Local connected to #{db_file}"
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: false, operation: :local_setup, database: db_file)
+          raise
         end
 
         def shutdown
@@ -82,7 +92,8 @@ module Legion
              wal_autocheckpoint cache_size busy_timeout].each do |pragma|
             val = begin
               @connection.fetch("PRAGMA #{pragma}").single_value
-            rescue StandardError
+            rescue StandardError => e
+              handle_exception(e, level: :warn, handled: true, operation: :local_stats_pragma, pragma: pragma)
               nil
             end
             stats[pragma.to_sym] = val unless val.nil?
@@ -92,6 +103,7 @@ module Legion
 
           stats
         rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :local_stats, database: @db_path)
           { connected: connected?, error: e.message }
         end
 
@@ -119,13 +131,48 @@ module Legion
           table = :"schema_migrations_#{name}"
           ::Sequel::TimestampMigrator.new(@connection, path, table: table).run
         rescue StandardError => e
-          Legion::Logging.warn "Local migration failed for #{path}: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :local_migration, name: name, path: path)
         end
 
         def local_settings
           return {} unless defined?(Legion::Settings)
 
           Legion::Settings[:data]&.dig(:local) || {}
+        end
+
+        def build_local_logger
+          tagged = if defined?(Legion::Logging::TaggedLogger) && respond_to?(:tagged_logger_settings, true)
+                     Legion::Logging::TaggedLogger.new(
+                       segments: %w[data local],
+                       **send(:tagged_logger_settings)
+                     )
+                   else
+                     Legion::Data::Connection::SegmentedTaggedLogger.new(segments: %w[data local])
+                   end
+          Legion::Data::Connection::SlowQueryLogger.new(tagged)
+        rescue StandardError => e
+          if respond_to?(:handle_exception, true)
+            handle_exception(e, level: :warn, handled: true, operation: :build_local_logger)
+          else
+            log.warn("build_local_logger failed: #{e.class}: #{e.message}")
+          end
+          Legion::Data::Connection::SlowQueryLogger.new(
+            Legion::Data::Connection::SegmentedTaggedLogger.new(segments: %w[data local], logger: log)
+          )
+        end
+
+        def resolved_sql_log_level
+          (local_settings[:sql_log_level] || Legion::Settings[:data][:sql_log_level] || 'debug').to_sym
+        rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :resolved_sql_log_level)
+          :debug
+        end
+
+        def resolved_log_warn_duration
+          local_settings[:log_warn_duration] || Legion::Settings[:data][:log_warn_duration]
+        rescue StandardError => e
+          handle_exception(e, level: :warn, handled: true, operation: :resolved_log_warn_duration)
+          nil
         end
       end
     end
