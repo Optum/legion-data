@@ -5,6 +5,7 @@ require 'fileutils'
 
 RSpec.describe Legion::Data::Local do
   let(:test_db) { 'legionio_local_test.db' }
+  let(:resolved_db) { File.join(File.expand_path('~/.legionio'), test_db) }
 
   before(:each) do
     described_class.reset!
@@ -16,7 +17,8 @@ RSpec.describe Legion::Data::Local do
     rescue StandardError
       nil
     end
-    FileUtils.rm_f(test_db)
+    FileUtils.rm_f(resolved_db)
+    FileUtils.rm_f(test_db) # cleanup any stale relative path files
   end
 
   describe '.setup' do
@@ -57,7 +59,7 @@ RSpec.describe Legion::Data::Local do
   describe '.db_path' do
     it 'returns the configured database path' do
       described_class.setup(database: test_db)
-      expect(described_class.db_path).to eq(test_db)
+      expect(described_class.db_path).to eq(resolved_db)
     end
   end
 

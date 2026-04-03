@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'fileutils'
 require 'legion/logging/helper'
 
 require 'sequel'
@@ -17,6 +18,11 @@ module Legion
           return if @connected
 
           db_file = database || local_settings[:database] || 'legionio_local.db'
+          unless File.absolute_path?(db_file)
+            base_dir = File.expand_path('~/.legionio')
+            FileUtils.mkdir_p(base_dir)
+            db_file = File.join(base_dir, db_file)
+          end
           @db_path = db_file
 
           sqlite_defaults = Legion::Data::Connection::ADAPTER_DEFAULTS.fetch(:sqlite, {})
@@ -39,9 +45,12 @@ module Legion
           end
 
           @connection = ::Sequel.connect(opts)
+          @connection.run('PRAGMA journal_mode=WAL')
+          @connection.run('PRAGMA busy_timeout=30000')
+          @connection.run('PRAGMA synchronous=NORMAL')
           @connected = true
           run_migrations
-          log.info "Legion::Data::Local connected to #{db_file}"
+          log.info "Legion::Data::Local connected to #{db_file} (WAL mode, 30s busy_timeout)"
         rescue StandardError => e
           handle_exception(e, level: :error, handled: false, operation: :local_setup, database: db_file)
           raise

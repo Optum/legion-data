@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.6.20] - 2026-04-03
+
+### Fixed
+- Local SQLite now uses WAL journal mode, 30s busy_timeout, and synchronous=NORMAL to reduce write contention
+- Local SQLite path resolved to `~/.legionio/` absolute path instead of using relative CWD
+
 ## [1.6.19] - 2026-04-02
 
 ### Changed
