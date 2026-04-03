@@ -55,6 +55,21 @@ RSpec.describe Legion::Data::Connection do
         expect(described_class.adapter).to eq(:sqlite)
         expect(described_class.sequel).to be_a(Sequel::SQLite::Database)
       end
+
+      it 'disables preconnect on the initial network connection attempt' do
+        captured_opts = nil
+        allow(Sequel).to receive(:connect).and_wrap_original do |original, *args, **kwargs|
+          options = kwargs.empty? ? args.last : kwargs
+          captured_opts = options if options[:adapter] == :mysql2
+          raise Sequel::DatabaseConnectionError, 'connection refused' if options[:adapter] == :mysql2
+
+          original.call(*args, **kwargs)
+        end
+
+        described_class.setup
+
+        expect(captured_opts[:preconnect]).to be(false)
+      end
     end
 
     context 'when dev_mode is false and network DB unreachable' do

@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Model
       class Node < Sequel::Model
+        include Legion::Logging::Helper
+
         # one_to_many :task_log
 
         def parsed_metrics
@@ -11,7 +15,7 @@ module Legion
 
           Legion::JSON.load(metrics)
         rescue StandardError => e
-          Legion::Logging.debug("Node#parsed_metrics JSON parse failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :debug, handled: true, operation: :parsed_metrics, id: self[:id])
           nil
         end
 
@@ -20,7 +24,7 @@ module Legion
 
           Legion::JSON.load(hosted_worker_ids)
         rescue StandardError => e
-          Legion::Logging.debug("Node#parsed_hosted_worker_ids JSON parse failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :debug, handled: true, operation: :parsed_hosted_worker_ids, id: self[:id])
           []
         end
       end

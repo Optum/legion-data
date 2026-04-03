@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Rls
+      extend Legion::Logging::Helper
+
       RLS_TABLES = %i[
         tasks digital_workers audit_log memory_traces extensions
         functions runners nodes settings value_metrics
@@ -14,7 +18,8 @@ module Legion
         return false unless Legion::Settings[:data][:connected]
 
         Legion::Data.connection.adapter_scheme == :postgres
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :rls_enabled)
         false
       end
 
@@ -30,7 +35,8 @@ module Legion
         return nil unless rls_enabled?
 
         Legion::Data.connection.fetch('SHOW app.current_tenant').first&.values&.first
-      rescue Sequel::DatabaseError
+      rescue Sequel::DatabaseError => e
+        handle_exception(e, level: :warn, handled: true, operation: :current_tenant)
         nil
       end
 

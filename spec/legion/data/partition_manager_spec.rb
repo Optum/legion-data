@@ -263,13 +263,12 @@ RSpec.describe Legion::Data::PartitionManager do
         fetch_calls == 1 ? [] : [{ name: 'events_y2025m01' }]
       end
 
-      logging_double = double('Legion::Logging')
-      allow(logging_double).to receive(:info)
-      stub_const('Legion::Logging', logging_double)
+      logger = instance_double('Legion::Logging::TaggedLogger', info: nil)
+      allow(described_class).to receive(:log).and_return(logger)
 
       described_class.ensure_partitions(table: :events, months_ahead: 1)
 
-      expect(logging_double).to have_received(:info).at_least(:once)
+      expect(logger).to have_received(:info).at_least(:once)
     end
   end
 
@@ -284,9 +283,8 @@ RSpec.describe Legion::Data::PartitionManager do
       allow(mock_db).to receive(:fetch).and_return([])
     end
 
-    it 'does not raise when Legion::Logging is not defined' do
-      # Hide Legion::Logging from the constant lookup without actually removing it
-      allow(described_class).to receive(:logging?).and_return(false)
+    it 'does not raise when log helper is available' do
+      allow(described_class).to receive(:log).and_return(instance_double('Legion::Logging::TaggedLogger', info: nil))
 
       expect { described_class.ensure_partitions(table: :events, months_ahead: 1) }.not_to raise_error
       expect { described_class.drop_old_partitions(table: :events, retention_months: 24) }.not_to raise_error

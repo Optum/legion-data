@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require 'digest'
 
 module Legion
@@ -8,6 +9,8 @@ module Legion
       GENESIS_HASH = ('0' * 64).freeze
 
       class << self
+        include Legion::Logging::Helper
+
         # Append a new record to the named chain. Returns the persisted record hash
         # on success, or an error hash when the database is unavailable.
         #
@@ -38,7 +41,7 @@ module Legion
               created_at:   ts
             )
 
-            Legion::Logging.debug "AuditRecord append: chain=#{chain_id} type=#{content_type} id=#{id}" if defined?(Legion::Logging)
+            log.debug "AuditRecord append: chain=#{chain_id} type=#{content_type} id=#{id}"
             { id: id, chain_id: chain_id, chain_hash: ch, parent_hash: parent_hash }
           end
         end
@@ -59,13 +62,13 @@ module Legion
           prev_hash = GENESIS_HASH
           records.each do |r|
             unless r[:parent_hash] == prev_hash
-              Legion::Logging.warn "AuditRecord chain broken: chain=#{chain_id} id=#{r[:id]}" if defined?(Legion::Logging)
+              log.warn "AuditRecord chain broken: chain=#{chain_id} id=#{r[:id]}"
               return { valid: false, broken_at: r[:id], reason: :parent_mismatch }
             end
 
             expected = compute_chain_hash(prev_hash, r[:content_hash], r[:created_at], r[:content_type])
             unless r[:chain_hash] == expected
-              Legion::Logging.warn "AuditRecord hash mismatch: chain=#{chain_id} id=#{r[:id]}" if defined?(Legion::Logging)
+              log.warn "AuditRecord hash mismatch: chain=#{chain_id} id=#{r[:id]}"
               return { valid: false, broken_at: r[:id], reason: :hash_mismatch }
             end
 
@@ -142,7 +145,7 @@ module Legion
 
           Legion::Crypt.sign(chain_hash)
         rescue StandardError => e
-          Legion::Logging.warn "AuditRecord signing failed: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :sign_record)
           nil
         end
 
@@ -163,7 +166,7 @@ module Legion
         def db_ready?
           defined?(Legion::Data) && Legion::Data.connection&.table_exists?(:audit_records)
         rescue StandardError => e
-          Legion::Logging.debug "AuditRecord#db_ready? check failed: #{e.message}" if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :audit_record_db_ready?)
           false
         end
       end

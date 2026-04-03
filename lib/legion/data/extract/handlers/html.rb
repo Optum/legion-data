@@ -21,9 +21,11 @@ module Legion
             title = doc.at_css('title')&.text&.strip
             text = doc.text.gsub(/\s+/, ' ').strip
             { text: text, metadata: { title: title } }
-          rescue LoadError
+          rescue LoadError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_html, gem: gem_name)
             { text: nil, error: :gem_not_installed, gem: gem_name }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_html)
             { text: nil, error: e.message }
           end
         end

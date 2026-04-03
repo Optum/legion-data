@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Archival
@@ -37,6 +39,10 @@ module Legion
           Time.now - (cold_after_days * 86_400)
         end
 
+        class << self
+          include Legion::Logging::Helper
+        end
+
         def self.from_settings
           return new unless defined?(Legion::Settings)
 
@@ -46,7 +52,7 @@ module Legion
 
           new(**archival.slice(:warm_after_days, :cold_after_days, :batch_size, :tables))
         rescue StandardError => e
-          Legion::Logging.warn("Policy.from_settings failed: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, handled: true, operation: :policy_from_settings)
           new
         end
       end

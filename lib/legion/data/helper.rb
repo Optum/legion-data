@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Helper
+      include Legion::Logging::Helper
+
       def data_path
         @data_path ||= "#{full_path}/data"
       end
@@ -39,7 +43,8 @@ module Legion
 
       def data_adapter
         Legion::Data::Connection.adapter
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :data_adapter)
         :unknown
       end
 
@@ -47,7 +52,8 @@ module Legion
         return {} unless data_connected?
 
         Legion::Data::Connection.pool_stats
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :data_pool_stats)
         {}
       end
 
@@ -55,7 +61,8 @@ module Legion
         return {} unless data_connected?
 
         Legion::Data.stats
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :data_stats)
         {}
       end
 
@@ -63,7 +70,8 @@ module Legion
         return {} unless local_data_connected?
 
         Legion::Data::Local.stats
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :local_data_stats)
         {}
       end
 
@@ -71,13 +79,15 @@ module Legion
 
       def data_can_read?(table_name)
         Legion::Data.can_read?(table_name)
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :data_can_read, table: table_name)
         false
       end
 
       def data_can_write?(table_name)
         Legion::Data.can_write?(table_name)
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :data_can_write, table: table_name)
         false
       end
     end

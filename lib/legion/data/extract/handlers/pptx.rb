@@ -24,9 +24,11 @@ module Legion
             end
             text = slides.each_with_index.map { |s, i| "Slide #{i + 1}: #{s}" }.join("\n\n")
             { text: text, metadata: { slides: slides.size } }
-          rescue LoadError
+          rescue LoadError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_pptx, gem: gem_name)
             { text: nil, error: :gem_not_installed, gem: 'rubyzip' }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_pptx)
             { text: nil, error: e.message }
           end
         end

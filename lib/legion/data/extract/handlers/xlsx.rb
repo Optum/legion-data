@@ -25,9 +25,11 @@ module Legion
             end
             text = sheets.join("\n\n")
             { text: text, metadata: { sheets: workbook.worksheets.size } }
-          rescue LoadError
+          rescue LoadError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_xlsx, gem: gem_name)
             { text: nil, error: :gem_not_installed, gem: gem_name }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_xlsx)
             { text: nil, error: e.message }
           end
         end

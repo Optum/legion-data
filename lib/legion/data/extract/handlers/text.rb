@@ -13,6 +13,7 @@ module Legion
             content = source.respond_to?(:read) ? source.read : File.read(source.to_s)
             { text: content, metadata: { bytes: content.bytesize } }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_text)
             { text: nil, error: e.message }
           end
         end

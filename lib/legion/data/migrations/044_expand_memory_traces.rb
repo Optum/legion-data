@@ -29,7 +29,10 @@ Sequel.migration do
 
     indexes = begin
       db.indexes(:memory_traces).keys
-    rescue StandardError
+    rescue StandardError => e
+      if defined?(Legion::Data) && Legion::Data.respond_to?(:handle_exception)
+        Legion::Data.handle_exception(e, level: :warn, handled: true, operation: :migration_044_indexes)
+      end
       []
     end
 

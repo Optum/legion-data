@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require 'legion/data/version'
 require 'legion/data/settings'
 require 'sequel'
@@ -16,16 +17,38 @@ require_relative 'data/rls'
 require_relative 'data/extract'
 require_relative 'data/audit_record'
 
+unless Legion::Logging::Helper.method_defined?(:handle_exception)
+  module Legion
+    module Logging
+      module Helper
+        def handle_exception(exception, task_id: nil, level: :error, handled: true, **opts)
+          context = opts.map { |key, value| "#{key}=#{value.inspect}" }.join(' ')
+          message = "#{exception.class}: #{exception.message}"
+          message = "#{message} task_id=#{task_id}" if task_id
+          message = "#{message} handled=#{handled}"
+          message = "#{message} #{context}" unless context.empty?
+          warn("[#{level}] #{message}")
+        rescue StandardError => e
+          warn("handle_exception fallback failed: #{e.class}: #{e.message}")
+        end
+      end
+    end
+  end
+end
+
 module Legion
   module Data
     class << self
+      include Legion::Logging::Helper
+
       def setup
+        log.info 'Legion::Data setup starting'
         connection_setup
         migrate
         load_models
         setup_cache
         setup_local
-        Legion::Logging.info 'Legion::Data setup complete' if defined?(Legion::Logging)
+        log.info 'Legion::Data setup complete'
       end
 
       def connection_setup
@@ -59,7 +82,8 @@ module Legion
 
       def connected?
         Legion::Settings[:data][:connected] == true
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :debug, handled: true, operation: :connected?)
         false
       end
 
@@ -75,7 +99,8 @@ module Legion
         @write_privileges[table_name] = connection
                                         .fetch("SELECT has_table_privilege(current_user, ?, 'INSERT') AS can", table_name.to_s)
                                         .first[:can] == true
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :can_write?, table: table_name)
         @write_privileges[table_name] = false if @write_privileges
         false
       end
@@ -92,7 +117,8 @@ module Legion
         @read_privileges[table_name] = connection
                                        .fetch("SELECT has_table_privilege(current_user, ?, 'SELECT') AS can", table_name.to_s)
                                        .first[:can] == true
-      rescue StandardError
+      rescue StandardError => e
+        handle_exception(e, level: :warn, handled: true, operation: :can_read?, table: table_name)
         @read_privileges[table_name] = false if @read_privileges
         false
       end
@@ -111,17 +137,18 @@ module Legion
       def setup_static_cache
         [Model::Extension, Model::Runner, Model::Function].each do |model|
           model.plugin :static_cache
-          Legion::Logging.debug("StaticCache enabled for #{model}") if defined?(Legion::Logging)
+          log.debug("StaticCache enabled for #{model}")
         rescue StandardError => e
-          Legion::Logging.warn("StaticCache failed for #{model}: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, operation: :setup_static_cache, model: model.to_s)
         end
-        Legion::Logging.info 'Legion::Data static cache loaded' if defined?(Legion::Logging)
+        log.info 'Legion::Data static cache loaded'
       end
 
       def reload_static_cache
         [Model::Extension, Model::Runner, Model::Function].each do |model|
           model.load_cache if model.respond_to?(:load_cache)
         end
+        log.info 'Legion::Data static cache reloaded'
       end
 
       def setup_external_cache
@@ -132,17 +159,17 @@ module Legion
           Model::Setting      => ttl
         }.each do |model, model_ttl|
           model.plugin :caching, ::Legion::Cache, ttl: model_ttl
-          Legion::Logging.debug("Caching enabled for #{model} (ttl: #{model_ttl})") if defined?(Legion::Logging)
+          log.debug("Caching enabled for #{model} (ttl: #{model_ttl})")
         rescue StandardError => e
-          Legion::Logging.warn("Caching failed for #{model}: #{e.message}") if defined?(Legion::Logging)
+          handle_exception(e, level: :warn, operation: :setup_external_cache, model: model.to_s, ttl: model_ttl)
         end
-        Legion::Logging.info 'Legion::Data external cache connected' if defined?(Legion::Logging)
+        log.info 'Legion::Data external cache connected'
       end
 
       def shutdown
         Legion::Data::Local.shutdown if defined?(Legion::Data::Local) && Legion::Data::Local.connected?
         Legion::Data::Connection.shutdown
-        Legion::Logging.info 'Legion::Data shutdown complete' if defined?(Legion::Logging)
+        log.info 'Legion::Data shutdown complete'
       end
 
       private
@@ -152,7 +179,7 @@ module Legion
 
         Legion::Data::Local.setup
       rescue StandardError => e
-        Legion::Logging.warn "Legion::Data::Local failed to setup: #{e.message}" if defined?(Legion::Logging)
+        handle_exception(e, level: :warn, operation: :setup_local)
       end
     end
   end

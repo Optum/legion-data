@@ -141,6 +141,7 @@ RSpec.describe Legion::Data::Helper do
     end
 
     it 'returns {} when an error is raised' do
+      allow(Legion::Settings).to receive(:[]).and_return({})
       allow(Legion::Settings).to receive(:[]).with(:data).and_return({ connected: true })
       allow(Legion::Data::Connection).to receive(:pool_stats).and_raise(StandardError)
       expect(instance.data_pool_stats).to eq({})
@@ -168,6 +169,7 @@ RSpec.describe Legion::Data::Helper do
     end
 
     it 'returns {} when an error is raised' do
+      allow(Legion::Settings).to receive(:[]).and_return({})
       allow(Legion::Settings).to receive(:[]).with(:data).and_return({ connected: true })
       allow(Legion::Data).to receive(:stats).and_raise(StandardError)
       expect(instance.data_stats).to eq({})

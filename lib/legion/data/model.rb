@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Models
       class << self
+        include Legion::Logging::Helper
+
         attr_reader :loaded_models
 
         def models
@@ -13,7 +17,7 @@ module Legion
         end
 
         def load
-          Legion::Logging.info 'Loading Legion::Data::Models'
+          log.info 'Loading Legion::Data::Models'
           @loaded_models ||= []
           require_sequel_models(models)
           Legion::Settings[:data][:models][:loaded] = true
@@ -25,13 +29,13 @@ module Legion
         end
 
         def load_sequel_model(model)
-          Legion::Logging.debug("Trying to load #{model}.rb")
+          log.debug("Trying to load #{model}.rb")
           require_relative "models/#{model}"
           @loaded_models << model
-          Legion::Logging.debug("Successfully loaded #{model}")
+          log.debug("Successfully loaded #{model}")
           model
         rescue LoadError => e
-          Legion::Logging.fatal("Failed to load #{model}")
+          handle_exception(e, level: :fatal, operation: :load_sequel_model, model: model)
           raise e unless Legion::Settings[:data][:models][:continue_on_fail]
         end
       end

@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [1.6.19] - 2026-04-02
+
+### Changed
+- Logging uplift across non-API `lib/` modules to use `Legion::Logging::Helper` and `log.*` instead of direct `Legion::Logging.*` calls
+- Removed direct `log_info` / `log_warn` wrapper usage in partition management and aligned logging with helper-backed tagged loggers
+- Added broader info-level operational logs for archival, retention, spool, extract, storage-tier, and partition workflows
+
+### Fixed
+- Added `handle_exception(...)` coverage to rescue paths across non-API data modules so failures are logged consistently without changing existing fallback behavior
+- Added compatibility fallback for `handle_exception` when older `legion-logging` releases are present in the runtime
+- Included `metadata_json` in EventStore integrity hashes for new events while preserving verification compatibility for legacy rows
+- Fixed encrypted Sequel columns to re-encrypt newly-created rows with their persisted primary key and maintain legacy read compatibility
+- Hardened spool persistence with atomic writes, deterministic replay ordering, and corrupt-file quarantine during read/flush
+- Updated partition manager specs to assert against helper-backed logger behavior
+
 ## [1.6.18] - 2026-03-30
 
 ### Added

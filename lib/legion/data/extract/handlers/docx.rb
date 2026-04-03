@@ -16,9 +16,11 @@ module Legion
             paragraphs = doc.paragraphs.map(&:text).reject(&:empty?)
             text = paragraphs.join("\n\n")
             { text: text, metadata: { paragraphs: paragraphs.size } }
-          rescue LoadError
+          rescue LoadError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_docx, gem: gem_name)
             { text: nil, error: :gem_not_installed, gem: gem_name }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_docx)
             { text: nil, error: e.message }
           end
         end

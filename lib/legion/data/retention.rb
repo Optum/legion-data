@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require_relative 'archival/policy'
 
 module Legion
@@ -9,6 +10,8 @@ module Legion
       DEFAULT_ARCHIVE_AFTER_DAYS = 90
 
       class << self
+        include Legion::Logging::Helper
+
         def archive_old_records(table:, date_column: nil, archive_after_days: DEFAULT_ARCHIVE_AFTER_DAYS)
           db = Legion::Data.connection
           return { archived: 0, table: table } unless db
@@ -29,8 +32,19 @@ module Legion
             end
           end
 
-          Legion::Logging.info "Archived #{count} row(s) from #{table}" if defined?(Legion::Logging) && count.positive?
+          log.info "Archived #{count} row(s) from #{table}" if count.positive?
           { archived: count, table: table }
+        rescue StandardError => e
+          handle_exception(
+            e,
+            level:              :error,
+            handled:            false,
+            operation:          :archive_old_records,
+            table:              table,
+            date_column:        date_column,
+            archive_after_days: archive_after_days
+          )
+          raise
         end
 
         def purge_expired_records(table:, date_column: nil, retention_years: DEFAULT_RETENTION_YEARS)
@@ -43,9 +57,20 @@ module Legion
           expired = db[archive_table].where(Sequel.identifier(date_column) < cutoff)
           count = expired.count
           expired.delete if count.positive?
-          Legion::Logging.info "Purged #{count} expired row(s) from #{archive_table}" if defined?(Legion::Logging) && count.positive?
+          log.info "Purged #{count} expired row(s) from #{archive_table}" if count.positive?
 
           { purged: count, table: table }
+        rescue StandardError => e
+          handle_exception(
+            e,
+            level:           :error,
+            handled:         false,
+            operation:       :purge_expired_records,
+            table:           table,
+            date_column:     date_column,
+            retention_years: retention_years
+          )
+          raise
         end
 
         def retention_status(table:, date_column: nil)
@@ -67,6 +92,9 @@ module Legion
             oldest_active:   oldest_active,
             oldest_archived: oldest_archived
           }
+        rescue StandardError => e
+          handle_exception(e, level: :warn, handled: false, operation: :retention_status, table: table, date_column: date_column)
+          raise
         end
 
         def archive_table_name(table)
@@ -90,6 +118,7 @@ module Legion
 
           source_schema = db.schema(source_table).to_h
 
+          log.info "Creating archive table #{archive_table} from #{source_table}"
           db.create_table(archive_table) do
             source_schema.each do |col_name, col_info|
               column col_name, col_info[:db_type]

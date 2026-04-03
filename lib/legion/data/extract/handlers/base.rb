@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Extract
@@ -8,6 +10,8 @@ module Legion
           @registry = {}.freeze
 
           class << self
+            include Legion::Logging::Helper
+
             attr_reader :registry
 
             def inherited(subclass)
@@ -22,6 +26,7 @@ module Legion
             end
 
             def register(handler_class)
+              log.debug "Registered extract handler type=#{handler_class.type} class=#{handler_class.name}"
               @registry = @registry.merge(handler_class.type => handler_class).freeze
             end
 
@@ -47,7 +52,8 @@ module Legion
 
               require gem_name
               true
-            rescue LoadError
+            rescue LoadError => e
+              handle_exception(e, level: :debug, handled: true, operation: :extract_handler_available, handler: name, gem: gem_name)
               false
             end
           end

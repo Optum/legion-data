@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'legion/logging/helper'
 require_relative 'extract/type_detector'
 require_relative 'extract/handlers/base'
 
@@ -7,6 +8,8 @@ module Legion
   module Data
     module Extract
       class << self
+        include Legion::Logging::Helper
+
         def extract(source, type: :auto)
           detected_type = type == :auto ? TypeDetector.detect(source) : type&.to_sym
           return { success: false, text: nil, error: :unknown_type } unless detected_type
@@ -19,13 +22,17 @@ module Legion
                      gem: handler.gem_name, type: detected_type }
           end
 
+          log.info "Extract starting type=#{detected_type} handler=#{handler.name}"
           result = handler.extract(source)
           if result[:text]
+            log.info "Extract succeeded type=#{detected_type}"
             { success: true, text: result[:text], metadata: result[:metadata], type: detected_type }
           else
+            log.warn "Extract failed type=#{detected_type} error=#{result[:error]}"
             { success: false, text: nil, error: result[:error], type: detected_type }
           end
         rescue StandardError => e
+          handle_exception(e, level: :error, handled: true, operation: :extract, type: detected_type)
           { success: false, text: nil, error: e.message, type: detected_type }
         end
 

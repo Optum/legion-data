@@ -32,6 +32,7 @@ module Legion
               }
             }
           rescue StandardError => e
+            handle_exception(e, level: :warn, handled: true, operation: :extract_vtt)
             { text: nil, error: e.message }
           end
 

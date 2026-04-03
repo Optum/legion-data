@@ -67,6 +67,8 @@ RSpec.describe Legion::Data::Spool::ScopedSpool do
   let(:tmpdir) { Dir.mktmpdir('legion_spool_spec') }
   let(:spool) { Legion::Data::Spool::ScopedSpool.new(Legion::Extensions::LLM::Gateway, tmpdir) }
   let(:sub_ns) { :metering }
+  let(:subdir) { File.join(tmpdir, 'llm/gateway/metering') }
+  let(:quarantine_dir) { File.join(subdir, 'quarantine') }
 
   after do
     FileUtils.rm_rf(tmpdir)
@@ -94,6 +96,12 @@ RSpec.describe Legion::Data::Spool::ScopedSpool do
       files = Dir[File.join(tmpdir, 'llm/gateway/metering', '*.json')]
       content = JSON.parse(File.read(files.first), symbolize_names: true)
       expect(content).to eq({ key: 'value' })
+    end
+
+    it 'does not leave temporary files behind' do
+      spool.write(sub_ns, key: 'value')
+
+      expect(Dir[File.join(subdir, '.*.tmp-*')]).to be_empty
     end
 
     it 'names files with timestamp-uuid pattern' do
@@ -130,6 +138,30 @@ RSpec.describe Legion::Data::Spool::ScopedSpool do
       spool.write(sub_ns, order: 3)
       events = spool.read(sub_ns)
       expect(events.map { |e| e[:order] }).to eq([1, 2, 3])
+    end
+
+    it 'sorts files by filename before reading' do
+      FileUtils.mkdir_p(subdir)
+      File.binwrite(File.join(subdir, '200.json'), JSON.generate(order: 2))
+      File.binwrite(File.join(subdir, '100.json'), JSON.generate(order: 1))
+      File.binwrite(File.join(subdir, '300.json'), JSON.generate(order: 3))
+
+      events = spool.read(sub_ns)
+
+      expect(events.map { |e| e[:order] }).to eq([1, 2, 3])
+    end
+
+    it 'quarantines corrupt files and continues reading valid ones' do
+      FileUtils.mkdir_p(subdir)
+      File.binwrite(File.join(subdir, '100.json'), JSON.generate(order: 1))
+      File.binwrite(File.join(subdir, '200.json'), '{"order":')
+      File.binwrite(File.join(subdir, '300.json'), JSON.generate(order: 2))
+
+      events = spool.read(sub_ns)
+
+      expect(events.map { |e| e[:order] }).to eq([1, 2])
+      expect(Dir[File.join(quarantine_dir, '*.corrupt')].size).to eq(1)
+      expect(spool.count(sub_ns)).to eq(2)
     end
 
     it 'does not delete files' do
@@ -178,6 +210,21 @@ RSpec.describe Legion::Data::Spool::ScopedSpool do
       seen = []
       spool.flush(sub_ns) { |e| seen << e[:order] }
       expect(seen).to eq([1, 2])
+    end
+
+    it 'quarantines corrupt files and continues draining valid ones' do
+      FileUtils.mkdir_p(subdir)
+      File.binwrite(File.join(subdir, '100.json'), JSON.generate(order: 1))
+      File.binwrite(File.join(subdir, '200.json'), '{"order":')
+      File.binwrite(File.join(subdir, '300.json'), JSON.generate(order: 2))
+
+      seen = []
+      result = spool.flush(sub_ns) { |e| seen << e[:order] }
+
+      expect(seen).to eq([1, 2])
+      expect(result).to eq(2)
+      expect(spool.count(sub_ns)).to eq(0)
+      expect(Dir[File.join(quarantine_dir, '*.corrupt')].size).to eq(1)
     end
   end
 
