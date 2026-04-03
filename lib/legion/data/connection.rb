@@ -159,7 +159,7 @@ module Legion
                       ::Sequel.connect(opts.merge(adapter: :sqlite, database: sqlite_path))
                     else
                       begin
-                        ::Sequel.connect(opts.merge(adapter: adapter, **creds_builder))
+                        ::Sequel.connect(connection_opts_for(adapter: adapter, opts: opts))
                       rescue StandardError => e
                         raise unless dev_fallback?
 
@@ -331,6 +331,12 @@ module Legion
 
         def sqlite_path
           Legion::Settings[:data][:creds][:database] || 'legionio.db'
+        end
+
+        def connection_opts_for(adapter:, opts:)
+          connection_opts = opts.merge(adapter: adapter, **creds_builder)
+          connection_opts[:preconnect] = false if adapter != :sqlite && dev_fallback?
+          connection_opts
         end
 
         def sequel_opts

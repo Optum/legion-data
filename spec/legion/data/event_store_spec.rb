@@ -61,9 +61,9 @@ RSpec.describe Legion::Data::EventStore do
 
     it 'round-trips data and metadata through append and read_stream' do
       described_class.append(
-        stream: 'stream-1',
-        type: 'consent.granted',
-        data: { granted: true },
+        stream:   'stream-1',
+        type:     'consent.granted',
+        data:     { granted: true },
         metadata: { request_id: 'req-1', actor: 'worker-1' }
       )
 
@@ -76,15 +76,15 @@ RSpec.describe Legion::Data::EventStore do
 
     it 'verifies a multi-event chain when metadata is unchanged' do
       described_class.append(
-        stream: 'stream-2',
-        type: 'consent.granted',
-        data: { step: 1 },
+        stream:   'stream-2',
+        type:     'consent.granted',
+        data:     { step: 1 },
         metadata: { request_id: 'req-1' }
       )
       described_class.append(
-        stream: 'stream-2',
-        type: 'consent.modified',
-        data: { step: 2 },
+        stream:   'stream-2',
+        type:     'consent.modified',
+        data:     { step: 2 },
         metadata: { request_id: 'req-2' }
       )
 
@@ -95,13 +95,14 @@ RSpec.describe Legion::Data::EventStore do
 
     it 'detects metadata tampering for newly-written rows' do
       described_class.append(
-        stream: 'stream-3',
-        type: 'consent.granted',
-        data: { granted: true },
+        stream:   'stream-3',
+        type:     'consent.granted',
+        data:     { granted: true },
         metadata: { request_id: 'req-1' }
       )
 
-      db[:governance_events].where(stream_id: 'stream-3', sequence_number: 1)
+      db[:governance_events]
+        .where(stream_id: 'stream-3', sequence_number: 1)
         .update(metadata_json: Legion::JSON.dump(request_id: 'tampered'))
 
       result = described_class.verify_chain('stream-3')
@@ -118,14 +119,14 @@ RSpec.describe Legion::Data::EventStore do
       legacy_hash = Digest::SHA256.hexdigest("#{stream}:1:#{type}:#{data_json}:#{previous_hash}")
 
       db[:governance_events].insert(
-        stream_id: stream,
-        event_type: type,
+        stream_id:       stream,
+        event_type:      type,
         sequence_number: 1,
-        data_json: data_json,
-        metadata_json: metadata_json,
-        event_hash: legacy_hash,
-        previous_hash: previous_hash,
-        created_at: Time.now
+        data_json:       data_json,
+        metadata_json:   metadata_json,
+        event_hash:      legacy_hash,
+        previous_hash:   previous_hash,
+        created_at:      Time.now
       )
 
       result = described_class.verify_chain(stream)
