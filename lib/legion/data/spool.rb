@@ -43,16 +43,22 @@ module Legion
           FileUtils.mkdir_p(dir)
           filename = "#{Time.now.strftime('%s%9N')}-#{SecureRandom.uuid}.json"
           path = File.join(dir, filename)
-          File.write(path, ::JSON.generate(payload))
+          temp_path = temp_path_for(dir, filename)
+          File.binwrite(temp_path, ::JSON.generate(payload))
+          File.rename(temp_path, path)
           log.info "Spool write: #{sub_namespace} -> #{filename}"
           path
         rescue StandardError => e
+          File.delete(temp_path) if defined?(temp_path) && temp_path && File.exist?(temp_path)
           handle_exception(e, level: :error, handled: false, operation: :spool_write, sub_namespace: sub_namespace)
           raise
         end
 
         def read(sub_namespace)
-          sorted_files(sub_namespace).map { |f| ::JSON.parse(File.read(f), symbolize_names: true) }
+          sorted_files(sub_namespace).each_with_object([]) do |path, events|
+            event = load_event_file(path, sub_namespace)
+            events << event if event
+          end
         rescue StandardError => e
           handle_exception(e, level: :error, handled: false, operation: :spool_read, sub_namespace: sub_namespace)
           raise
@@ -62,7 +68,9 @@ module Legion
           count = 0
           path = nil
           sorted_files(sub_namespace).each do |path|
-            event = ::JSON.parse(File.read(path), symbolize_names: true)
+            event = load_event_file(path, sub_namespace)
+            next unless event
+
             yield event
             File.delete(path)
             count += 1
@@ -99,7 +107,45 @@ module Legion
           dir = sub_dir(sub_namespace)
           return [] unless Dir.exist?(dir)
 
-          Dir[File.join(dir, '*.json')]
+          Dir.glob(File.join(dir, '*.json'), sort: true)
+        end
+
+        def load_event_file(path, sub_namespace)
+          ::JSON.parse(File.binread(path), symbolize_names: true)
+        rescue Errno::ENOENT
+          nil
+        rescue ::JSON::ParserError, EOFError, ArgumentError => e
+          quarantine_corrupt_file(path, sub_namespace, e)
+          nil
+        end
+
+        def quarantine_corrupt_file(path, sub_namespace, error)
+          return unless File.exist?(path)
+
+          quarantine_dir = File.join(sub_dir(sub_namespace), 'quarantine')
+          FileUtils.mkdir_p(quarantine_dir)
+          quarantine_path = unique_quarantine_path(quarantine_dir, File.basename(path))
+          File.rename(path, quarantine_path)
+          handle_exception(
+            error,
+            level:           :warn,
+            handled:         true,
+            operation:       :spool_quarantine,
+            sub_namespace:   sub_namespace,
+            path:            path,
+            quarantine_path: quarantine_path
+          )
+        end
+
+        def unique_quarantine_path(quarantine_dir, basename)
+          path = File.join(quarantine_dir, "#{basename}.corrupt")
+          return path unless File.exist?(path)
+
+          File.join(quarantine_dir, "#{basename}.#{SecureRandom.uuid}.corrupt")
+        end
+
+        def temp_path_for(dir, filename)
+          File.join(dir, ".#{filename}.tmp-#{SecureRandom.uuid}")
         end
       end
     end

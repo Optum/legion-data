@@ -32,7 +32,7 @@ module Legion
 
             data_json = Legion::JSON.dump(data)
             metadata_json = Legion::JSON.dump(metadata)
-            event_hash = compute_hash(stream, seq, type, data_json, prev_hash)
+            event_hash = compute_hash(stream, seq, type, data_json, metadata_json, prev_hash)
 
             conn[:governance_events].insert(
               stream_id:       stream,
@@ -75,9 +75,12 @@ module Legion
                                .all
 
           prev_hash = '0' * 64
+          legacy_hashes = 0
           events.each do |e|
-            expected = compute_hash(stream, e[:sequence_number], e[:event_type], e[:data_json], prev_hash)
-            unless e[:event_hash] == expected
+            expected = compute_hash(stream, e[:sequence_number], e[:event_type], e[:data_json], e[:metadata_json], prev_hash)
+            legacy_expected = legacy_compute_hash(stream, e[:sequence_number], e[:event_type], e[:data_json], prev_hash)
+
+            unless [expected, legacy_expected].include?(e[:event_hash])
               log.warn "EventStore chain broken: stream=#{stream} seq=#{e[:sequence_number]}"
               return { valid: false, broken_at: e[:sequence_number] }
             end
@@ -86,16 +89,29 @@ module Legion
               return { valid: false, broken_at: e[:sequence_number] }
             end
 
+            legacy_hashes += 1 if e[:event_hash] == legacy_expected && e[:event_hash] != expected
             prev_hash = e[:event_hash]
           end
 
-          { valid: true, length: events.size }
+          result = { valid: true, length: events.size }
+          result[:legacy_hashes] = legacy_hashes if legacy_hashes.positive?
+          result
         end
 
         private
 
-        def compute_hash(stream, seq, type, data_json, prev_hash)
-          Digest::SHA256.hexdigest("#{stream}:#{seq}:#{type}:#{data_json}:#{prev_hash}")
+        def compute_hash(stream, seq, type, data_json, metadata_json, prev_hash)
+          Digest::SHA256.hexdigest(
+            "#{stream}:#{seq}:#{type}:#{normalized_json(data_json)}:#{normalized_json(metadata_json)}:#{prev_hash}"
+          )
+        end
+
+        def legacy_compute_hash(stream, seq, type, data_json, prev_hash)
+          Digest::SHA256.hexdigest("#{stream}:#{seq}:#{type}:#{normalized_json(data_json)}:#{prev_hash}")
+        end
+
+        def normalized_json(json)
+          json || '{}'
         end
 
         def deserialize(event)

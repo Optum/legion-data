@@ -4,6 +4,26 @@ require 'spec_helper'
 require 'legion/data/event_store'
 
 RSpec.describe Legion::Data::EventStore do
+  let(:db) do
+    Sequel.sqlite.tap do |database|
+      database.create_table(:governance_events) do
+        primary_key :id
+        String :stream_id, null: false
+        String :event_type, null: false
+        Integer :sequence_number, null: false
+        column :data_json, :text
+        column :metadata_json, :text
+        String :event_hash, size: 64
+        String :previous_hash, size: 64
+        DateTime :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+      end
+    end
+  end
+
+  after do
+    db.disconnect if defined?(db) && db
+  end
+
   describe 'GOVERNANCE_EVENT_TYPES' do
     it 'includes consent and extinction events' do
       expect(described_class::GOVERNANCE_EVENT_TYPES).to include('consent.granted', 'extinction.triggered')
@@ -30,6 +50,87 @@ RSpec.describe Legion::Data::EventStore do
       allow(described_class).to receive(:db_ready?).and_return(false)
       result = described_class.verify_chain('test')
       expect(result[:valid]).to be false
+    end
+  end
+
+  context 'with a live database' do
+    before do
+      allow(Legion::Data).to receive(:connection).and_return(db)
+      allow(described_class).to receive(:db_ready?).and_return(true)
+    end
+
+    it 'round-trips data and metadata through append and read_stream' do
+      described_class.append(
+        stream: 'stream-1',
+        type: 'consent.granted',
+        data: { granted: true },
+        metadata: { request_id: 'req-1', actor: 'worker-1' }
+      )
+
+      events = described_class.read_stream('stream-1')
+
+      expect(events.size).to eq(1)
+      expect(events.first[:data]).to eq({ granted: true })
+      expect(events.first[:metadata]).to eq({ request_id: 'req-1', actor: 'worker-1' })
+    end
+
+    it 'verifies a multi-event chain when metadata is unchanged' do
+      described_class.append(
+        stream: 'stream-2',
+        type: 'consent.granted',
+        data: { step: 1 },
+        metadata: { request_id: 'req-1' }
+      )
+      described_class.append(
+        stream: 'stream-2',
+        type: 'consent.modified',
+        data: { step: 2 },
+        metadata: { request_id: 'req-2' }
+      )
+
+      result = described_class.verify_chain('stream-2')
+
+      expect(result).to eq(valid: true, length: 2)
+    end
+
+    it 'detects metadata tampering for newly-written rows' do
+      described_class.append(
+        stream: 'stream-3',
+        type: 'consent.granted',
+        data: { granted: true },
+        metadata: { request_id: 'req-1' }
+      )
+
+      db[:governance_events].where(stream_id: 'stream-3', sequence_number: 1)
+        .update(metadata_json: Legion::JSON.dump(request_id: 'tampered'))
+
+      result = described_class.verify_chain('stream-3')
+
+      expect(result).to eq(valid: false, broken_at: 1)
+    end
+
+    it 'continues to verify legacy rows hashed without metadata_json' do
+      stream = 'legacy-stream'
+      type = 'consent.granted'
+      data_json = Legion::JSON.dump(granted: true)
+      metadata_json = Legion::JSON.dump(request_id: 'req-1')
+      previous_hash = '0' * 64
+      legacy_hash = Digest::SHA256.hexdigest("#{stream}:1:#{type}:#{data_json}:#{previous_hash}")
+
+      db[:governance_events].insert(
+        stream_id: stream,
+        event_type: type,
+        sequence_number: 1,
+        data_json: data_json,
+        metadata_json: metadata_json,
+        event_hash: legacy_hash,
+        previous_hash: previous_hash,
+        created_at: Time.now
+      )
+
+      result = described_class.verify_chain(stream)
+
+      expect(result).to eq(valid: true, length: 1, legacy_hashes: 1)
     end
   end
 end
