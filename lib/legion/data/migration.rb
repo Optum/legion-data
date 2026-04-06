@@ -11,6 +11,11 @@ module Legion
         include Legion::Logging::Helper
 
         def migrate(connection = Legion::Data.connection, path = "#{__dir__}/migrations", **)
+          if defined?(Legion::Mode) && Legion::Mode.respond_to?(:current) && !Legion::Mode.infra?
+            log.info "Legion::Data::Migration skipped (mode: #{Legion::Mode.current}, requires: infra)"
+            return
+          end
+
           Legion::Settings[:data][:migrations][:version] = Sequel::Migrator.run(connection, path, **)
           log.info("Legion::Data::Migration ran successfully to version #{Legion::Settings[:data][:migrations][:version]}")
           Legion::Settings[:data][:migrations][:ran] = true

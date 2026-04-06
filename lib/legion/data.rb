@@ -58,6 +58,8 @@ module Legion
       end
 
       def migrate
+        return if skip_migrations?
+
         Legion::Data::Migration.migrate
       end
 
@@ -173,6 +175,23 @@ module Legion
       end
 
       private
+
+      def skip_migrations?
+        # Check auto_migrate setting
+        auto_migrate = Legion::Settings[:data][:migrations][:auto_migrate]
+        unless auto_migrate
+          log.info 'Legion::Data migrations skipped (auto_migrate: false)'
+          return true
+        end
+
+        # Check mode gate: only infra mode runs migrations (when Mode is available)
+        if defined?(Legion::Mode) && Legion::Mode.respond_to?(:current) && !Legion::Mode.infra?
+          log.info "Legion::Data migrations skipped (mode: #{Legion::Mode.current}, requires: infra)"
+          return true
+        end
+
+        false
+      end
 
       def setup_local
         return if Legion::Settings[:data].dig(:local, :enabled) == false

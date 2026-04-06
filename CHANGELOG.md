@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## [1.6.22] - 2026-04-06
+
+### Added
+- Migration 063: `identity_providers` table (provider_type, facing, priority, trust_weight, capabilities)
+- Migration 064: `principals` table (canonical_name regex constraint, kind, unique composite)
+- Migration 065: `identities` table (principal/provider FKs, partial unique index on active)
+- Migration 066: `identity_groups` table (source: ldap/entra/manual)
+- Migration 067: `identity_group_memberships` table (status, trust_weight, discovered_by, tie-break index)
+- Migration 068: `entity_type` column on `audit_records` with index
+- Migration 069: `principal_id` FK on `nodes` table
+- 5 Sequel models: `IdentityProvider`, `Principal`, `Identity`, `IdentityGroup`, `IdentityGroupMembership`
+- `Identity` model wired through `SequelPlugin` `encrypted_column :profile` for at-rest encryption
+- `Node` model gains `many_to_one :principal` association
+
+### Changed
+- Migration mode gate: only `:infra` mode runs migrations when `Legion::Mode` is available
+- `auto_migrate` settings check wired into `Data.setup` (skips migrations when `auto_migrate: false`)
+- Mode guard added to both `Data.migrate` and `Migration.migrate` for defense-in-depth
+
+## [1.6.21] - 2026-04-05
+
 ### Added
 - Migration 062: `tool_embedding_cache` table for global embedding persistence
 

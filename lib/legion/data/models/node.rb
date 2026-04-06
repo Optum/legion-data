@@ -9,6 +9,7 @@ module Legion
         include Legion::Logging::Helper
 
         # one_to_many :task_log
+        many_to_one :principal, class: 'Legion::Data::Model::Principal'
 
         def parsed_metrics
           return nil unless metrics
