@@ -2,8 +2,8 @@
 
 Sequel.migration do
   up do
-    return unless adapter_scheme == :postgres
-    return unless table_exists?(:audit_records)
+    next unless adapter_scheme == :postgres
+    next unless table_exists?(:audit_records)
 
     alter_table(:audit_records) do
       add_column :entity_type, String, size: 100, null: true
@@ -13,8 +13,8 @@ Sequel.migration do
   end
 
   down do
-    return unless adapter_scheme == :postgres
-    return unless table_exists?(:audit_records)
+    next unless adapter_scheme == :postgres
+    next unless table_exists?(:audit_records)
 
     alter_table(:audit_records) do
       drop_column :entity_type

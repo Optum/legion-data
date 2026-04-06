@@ -13,7 +13,8 @@ module Legion
         def models
           %w[extension function relationship chain task runner node setting digital_worker
              apollo_entry apollo_relation apollo_expertise apollo_access_log audit_log
-             audit_record]
+             audit_record identity_provider principal identity identity_group
+             identity_group_membership]
         end
 
         def load

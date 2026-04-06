@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    return unless adapter_scheme == :postgres
+    next unless adapter_scheme == :postgres
 
     alter_table(:nodes) do
       add_column :principal_id, :uuid
@@ -13,7 +13,7 @@ Sequel.migration do
   end
 
   down do
-    return unless adapter_scheme == :postgres
+    next unless adapter_scheme == :postgres
 
     alter_table(:nodes) do
       drop_column :principal_id

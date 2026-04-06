@@ -185,11 +185,9 @@ module Legion
         end
 
         # Check mode gate: only infra mode runs migrations (when Mode is available)
-        if defined?(Legion::Mode) && Legion::Mode.respond_to?(:current)
-          unless Legion::Mode.infra?
-            log.info "Legion::Data migrations skipped (mode: #{Legion::Mode.current}, requires: infra)"
-            return true
-          end
+        if defined?(Legion::Mode) && Legion::Mode.respond_to?(:current) && !Legion::Mode.infra?
+          log.info "Legion::Data migrations skipped (mode: #{Legion::Mode.current}, requires: infra)"
+          return true
         end
 
         false
