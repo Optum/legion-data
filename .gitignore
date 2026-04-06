@@ -18,3 +18,4 @@ legion.log
 .DS_Store
 # SQLite database files
 *.db
+.worktrees

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Migration 062: `tool_embedding_cache` table for global embedding persistence
+
 ## [1.6.20] - 2026-04-03
 
 ### Fixed
