@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.6.23] - 2026-04-07
+
+### Fixed
+- Migration 067: parenthesize CASE expression in `idx_memberships_trust_tiebreak` index (PG syntax error)
+
 ## [1.6.22] - 2026-04-06
 
 ### Added

@@ -24,7 +24,7 @@ Sequel.migration do
     run <<~SQL
       CREATE INDEX idx_memberships_trust_tiebreak
         ON identity_group_memberships (principal_id, trust_weight ASC,
-          CASE status WHEN 'expired' THEN 0 WHEN 'stale' THEN 1 WHEN 'active' THEN 2 END ASC)
+          (CASE status WHEN 'expired' THEN 0 WHEN 'stale' THEN 1 WHEN 'active' THEN 2 END) ASC)
     SQL
   end
 
