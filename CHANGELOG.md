@@ -6,6 +6,7 @@
 
 ### Added
 - Migration 070: `resume_routing_key` and `resume_exchange` columns on `approval_queue` table (nullable String 255) to support fleet pipeline resume on approval
+- Migration 071: `engine` VARCHAR(50) NULL column on `relationships` table — enables fleet pipeline to store explicit transformer engine selection per relationship
 
 ## [1.6.23] - 2026-04-07
 
