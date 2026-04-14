@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.6.24] - 2026-04-13
+
+### Added
+- Migration 071: `engine` VARCHAR(50) NULL column on `relationships` table — enables fleet pipeline to store explicit transformer engine selection per relationship
+
 ## [1.6.23] - 2026-04-07
 
 ### Fixed
