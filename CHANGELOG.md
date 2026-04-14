@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.6.24] - 2026-04-13
+
+### Added
+- Migration 070: `resume_routing_key` and `resume_exchange` columns on `approval_queue` table (nullable String 255) to support fleet pipeline resume on approval
+
 ## [1.6.23] - 2026-04-07
 
 ### Fixed
