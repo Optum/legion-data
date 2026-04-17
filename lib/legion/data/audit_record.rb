@@ -130,8 +130,8 @@ module Legion
           (t.to_r * 1_000_000).to_i
         end
 
-        def truncate_to_us(t)
-          us = (t.to_r * 1_000_000).to_i
+        def truncate_to_us(time)
+          us = (time.to_r * 1_000_000).to_i
           ::Time.at(Rational(us, 1_000_000))
         end
 
