@@ -316,11 +316,11 @@ module Legion
             log.info "Connected to SQLite at #{sqlite_path}"
           else
             actual = Legion::Settings[:data][:creds] || {}
-            user = actual[:user] || actual[:username] || 'unknown'
-            host = actual[:host] || '127.0.0.1'
-            port = actual[:port]
-            db   = actual[:database] || actual[:db]
-            log.info "Connected to #{adapter}://#{user}@#{host}:#{port}/#{db}"
+            conn_user = actual[:user] || actual[:username] || 'unknown'
+            conn_host = actual[:host] || '127.0.0.1'
+            conn_port = actual[:port]
+            conn_db   = actual[:database] || actual[:db]
+            log.info "Connected to #{adapter}://#{conn_user}@#{conn_host}:#{conn_port}/#{conn_db}"
           end
         end
 

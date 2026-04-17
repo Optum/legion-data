@@ -8,13 +8,13 @@ RSpec.describe 'Legion::Data::Connection' do
   end
 
   it 'can setup' do
-    expect { Legion::Data::Connection.setup }.not_to raise_exception
+    expect { Legion::Data::Connection.setup }.not_to raise_error
     # expect(Legion::Data::Connection.adapter).to eq :mysql2
     expect(Legion::Settings[:data][:connected]).to eq true
   end
 
   it 'can shutdown' do
-    expect { Legion::Data::Connection.shutdown }.not_to raise_exception
+    expect { Legion::Data::Connection.shutdown }.not_to raise_error
     expect(Legion::Settings[:data][:connected]).to eq false
   end
 
