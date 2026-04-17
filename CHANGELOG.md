@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## [1.6.29] - 2026-04-17
+
+### Fixed
+- `Connection#log_connection_info`: renamed local variables `user`/`host`/`port`/`db` to `conn_user`/`conn_host`/`conn_port`/`conn_db` to avoid shadowing outer-scope names and resolve `rb/uninitialized-local-variable` CodeQL alert
+- CI workflow: added explicit `permissions:` block to all jobs (`contents: read` for checkout jobs, `{}` for reusable workflow calls) to satisfy `actions/missing-workflow-permissions` code scanning alerts
+- Spec: replaced deprecated `raise_exception` matcher with `raise_error` in `connection_spec.rb` and `model_spec.rb`; updated stale test description in `model_spec.rb`
+
+## [1.6.28] - 2026-04-17
+
+### Changed
+- `legion-json` added as explicit gemspec runtime dependency — `Legion::JSON` is used throughout and was previously only an implicit transitive dependency
+- Rewrote `README.md` with accurate architecture diagram, full model table, migration history, configuration reference, and usage examples
+- Updated `CLAUDE.md` with mandatory `bundle exec rspec` + `bundle exec rubocop -A` reminder for AI agents
+- Added `AGENTS.md` with mandatory rspec/rubocop reminder and gem overview
+- Updated `.github/CODEOWNERS` to `@Esity @LegionIO/core`
+- Added `*.gem` to `.gitignore` to prevent build artifacts from being committed
+- Removed `sonar-project.properties`
+
 ## [1.6.27] - 2026-04-17
 
 ### Fixed

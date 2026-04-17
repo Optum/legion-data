@@ -6,12 +6,18 @@ on:
   schedule:
     - cron: '0 9 * * 1'
 
+permissions: {}
+
 jobs:
   ci:
+    permissions:
+      contents: read
     uses: LegionIO/.github/.github/workflows/ci.yml@main
 
   ci-postgres:
     name: "RSpec (PostgreSQL)"
+    permissions:
+      contents: read
     timeout-minutes: 15
     runs-on: ubuntu-latest
     services:
@@ -45,24 +51,43 @@ jobs:
         run: bundle exec rspec
 
   lint:
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
     uses: LegionIO/.github/.github/workflows/lint-patterns.yml@main
 
   security:
+    permissions:
+      contents: read
+      security-events: write
     uses: LegionIO/.github/.github/workflows/security-scan.yml@main
 
   version-changelog:
+    permissions:
+      contents: read
+      pull-requests: read
     uses: LegionIO/.github/.github/workflows/version-changelog.yml@main
 
   dependency-review:
+    permissions:
+      contents: read
+      pull-requests: write
     uses: LegionIO/.github/.github/workflows/dependency-review.yml@main
 
   stale:
     if: github.event_name == 'schedule'
+    permissions:
+      issues: write
+      pull-requests: write
     uses: LegionIO/.github/.github/workflows/stale.yml@main
 
   release:
     needs: [ci, ci-postgres, lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      packages: write
     uses: LegionIO/.github/.github/workflows/release.yml@main
     secrets:
       rubygems-api-key: ${{ secrets.RUBYGEMS_API_KEY }}

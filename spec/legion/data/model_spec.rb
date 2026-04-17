@@ -10,19 +10,19 @@ RSpec.describe Legion::Data::Models do
   end
 
   it 'can load' do
-    expect { Legion::Data::Models.load }.not_to raise_exception
+    expect { Legion::Data::Models.load }.not_to raise_error
     expect(Legion::Settings[:data][:models][:loaded]).to eq true
   end
 
   it '.require_sequel_models' do
     expect(Legion::Data::Models.require_sequel_models).to be_a Array
     expect(Legion::Data::Models.require_sequel_models([])).to eq []
-    expect { Legion::Data::Models.require_sequel_models(['bad_model']) }.to raise_exception(LoadError)
+    expect { Legion::Data::Models.require_sequel_models(['bad_model']) }.to raise_error(LoadError)
   end
 
   it '.load_sequel_model' do
     expect(Legion::Data::Models.load_sequel_model('task')).to eq 'task'
-    expect { Legion::Data::Models.load_sequel_model('bad_model') }.to raise_exception LoadError
+    expect { Legion::Data::Models.load_sequel_model('bad_model') }.to raise_error(LoadError)
   end
 
   describe 'settings-driven behaviour' do
@@ -32,7 +32,7 @@ RSpec.describe Legion::Data::Models do
       expect(result).to be_nil
     end
 
-    it 'uses continue_on_load_fail (not continue_on_fail) to swallow LoadError' do
+    it 'uses continue_on_load_fail to swallow LoadError' do
       Legion::Settings[:data][:models][:continue_on_load_fail] = true
       expect { Legion::Data::Models.load_sequel_model('does_not_exist') }.not_to raise_error
     end

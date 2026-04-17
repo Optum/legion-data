@@ -16,6 +16,8 @@ legionio.key
 # logs and OS artifacts
 legion.log
 .DS_Store
+# gem build artifacts
+*.gem
 # SQLite database files
 *.db
 .worktrees
