@@ -158,11 +158,7 @@ module Legion
         end
 
         def json_dump(obj)
-          if defined?(Legion::JSON)
-            Legion::JSON.dump(obj)
-          else
-            ::JSON.generate(obj)
-          end
+          ::JSON.generate(obj)
         end
 
         def gzip_compress(data)
