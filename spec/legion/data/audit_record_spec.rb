@@ -97,6 +97,22 @@ RSpec.describe Legion::Data::AuditRecord do
   # -------------------------------------------------------------------------
   # Integration — live SQLite database
   # -------------------------------------------------------------------------
+  # Temporarily disables the PG NO UPDATE/NO DELETE rules so tamper specs can
+  # directly corrupt rows. On non-PG adapters the rules don't exist and the
+  # block just yields directly.
+  def with_audit_records_writable(conn)
+    if Legion::Data::Connection.adapter == :postgres
+      conn.run('ALTER TABLE audit_records DISABLE RULE no_update_audit_records')
+      conn.run('ALTER TABLE audit_records DISABLE RULE no_delete_audit_records')
+    end
+    yield
+  ensure
+    if Legion::Data::Connection.adapter == :postgres
+      conn.run('ALTER TABLE audit_records ENABLE RULE no_update_audit_records')
+      conn.run('ALTER TABLE audit_records ENABLE RULE no_delete_audit_records')
+    end
+  end
+
   context 'with a live database', :aggregate_failures do
     before do
       Legion::Data::Connection.setup unless Legion::Data.connected?
@@ -176,16 +192,18 @@ RSpec.describe Legion::Data::AuditRecord do
         described_class.append(chain_id: chain_id, content_type: content_type,
                                content_hash: Digest::SHA256.hexdigest('r2'))
 
-        # Directly corrupt the first record's chain_hash (bypass immutability model guard).
-        # Use a per-test random value to avoid unique constraint collisions.
         tampered_hash = Digest::SHA256.hexdigest("tamper-#{chain_id}")
         first = Legion::Data.connection[:audit_records]
                             .where(chain_id: chain_id)
                             .order(:created_at, :id)
                             .first
-        Legion::Data.connection[:audit_records]
-                    .where(id: first[:id])
-                    .update(chain_hash: tampered_hash)
+
+        # PG NO UPDATE rule silently ignores Sequel updates; bypass via raw SQL.
+        with_audit_records_writable(Legion::Data.connection) do
+          Legion::Data.connection[:audit_records]
+                      .where(id: first[:id])
+                      .update(chain_hash: tampered_hash)
+        end
 
         result = described_class.verify(chain_id: chain_id)
         expect(result[:valid]).to be false
@@ -197,9 +215,11 @@ RSpec.describe Legion::Data::AuditRecord do
         r2 = described_class.append(chain_id: chain_id, content_type: content_type,
                                     content_hash: Digest::SHA256.hexdigest('r2'))
 
-        Legion::Data.connection[:audit_records]
-                    .where(id: r2[:id])
-                    .update(parent_hash: Digest::SHA256.hexdigest("tamper-parent-#{chain_id}"))
+        with_audit_records_writable(Legion::Data.connection) do
+          Legion::Data.connection[:audit_records]
+                      .where(id: r2[:id])
+                      .update(parent_hash: Digest::SHA256.hexdigest("tamper-parent-#{chain_id}"))
+        end
 
         result = described_class.verify(chain_id: chain_id)
         expect(result[:valid]).to be false
