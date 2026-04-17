@@ -1,18 +1,22 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) framework. Provides database connectivity via Sequel ORM, automatic schema migrations (47 numbered migrations), and data models for extensions, functions, runners, nodes, tasks, settings, digital workers, task relationships, Apollo shared knowledge tables (PostgreSQL only), tenants, audit log, and archive tables.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (71 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.6.6
+**Version**: 1.6.25 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+
+---
 
 ## Supported Databases
 
 | Database | Adapter | Gem | Default |
 |----------|---------|-----|---------|
-| SQLite | `sqlite` | `sqlite3` (included) | Yes |
-| MySQL | `mysql2` | `mysql2` | No |
-| PostgreSQL | `postgres` | `pg` | No |
+| SQLite | `sqlite` | `sqlite3` (bundled) | Yes |
+| MySQL | `mysql2` | `mysql2` (optional) | No |
+| PostgreSQL | `postgres` | `pg` (optional) | No |
 
-SQLite is the default adapter. For MySQL or PostgreSQL, install the corresponding gem and set the adapter in your configuration.
+SQLite is the default and requires no additional gems. For MySQL or PostgreSQL, install the corresponding gem and configure the adapter.
+
+---
 
 ## Installation
 
@@ -20,86 +24,130 @@ SQLite is the default adapter. For MySQL or PostgreSQL, install the correspondin
 gem install legion-data
 ```
 
-Or add to your Gemfile:
+Or add to your `Gemfile`:
 
 ```ruby
 gem 'legion-data'
 
-# Add one of these for production databases:
+# For production databases, add one of these:
 # gem 'mysql2', '>= 0.5.5'
 # gem 'pg', '>= 1.5'
 ```
 
-## Data Models
+---
 
-| Model | Table | Description |
-|-------|-------|-------------|
-| `Extension` | `extensions` | Installed LEX extensions |
-| `Function` | `functions` | Available functions per extension |
-| `Runner` | `runners` | Runner definitions |
-| `Node` | `nodes` | Cluster node registry |
-| `Task` | `tasks` | Task instances |
-| `TaskLog` | `task_logs` | Task execution logs |
-| `Setting` | `settings` | Persistent settings store |
-| `DigitalWorker` | `digital_workers` | Digital worker registry |
-| `Relationship` | `relationships` | Task trigger/action relationships between functions |
-| `AuditLog` | `audit_log` | Tamper-evident audit trail with hash chain |
-| `RbacRoleAssignment` | `rbac_role_assignments` | RBAC principal -> role mappings |
-| `RbacRunnerGrant` | `rbac_runner_grants` | Per-runner permission grants |
-| `RbacCrossTeamGrant` | `rbac_cross_team_grants` | Cross-team access grants |
-| `ApolloEntry` | `apollo_entries` | Apollo knowledge entries — PostgreSQL only (pgvector) |
-| `ApolloRelation` | `apollo_relations` | Relations between Apollo entries — PostgreSQL only |
-| `ApolloExpertise` | `apollo_expertise` | Per-agent domain expertise — PostgreSQL only |
-| `ApolloAccessLog` | `apollo_access_log` | Apollo access audit log — PostgreSQL only |
+## Architecture Overview
 
-Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
+```
+Legion::Data (singleton module)
+├── .setup              # Connect, migrate, load models, set up local DB
+├── .connection         # Sequel::Database handle (shared/central)
+├── .local              # Legion::Data::Local (local SQLite accessor)
+├── .stats              # Combined { shared: ..., local: ... } metrics
+├── .reload_static_cache  # Refresh in-memory StaticCache after extension hot-load
+├── .shutdown           # Close both shared and local connections
+│
+├── Connection          # Sequel database connection management
+│   ├── .adapter        # Reads adapter from settings (:sqlite, :mysql2, :postgres)
+│   ├── .setup          # Establish connection (dev_mode fallback to SQLite if unreachable)
+│   ├── .sequel         # Raw Sequel::Database accessor
+│   ├── .stats          # Pool metrics, tuning snapshot, adapter-specific DB stats
+│   └── .shutdown       # Disconnect and close query file logger
+│
+├── Migration           # Auto-migration system (71 numbered Sequel DSL migrations)
+│
+├── Model               # Sequel model autoloader
+│   └── Models: Extension, Function, Runner, Node, Task, TaskLog, Setting,
+│               DigitalWorker, Relationship, AuditLog, AuditRecord, Chain,
+│               RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant,
+│               IdentityProvider, Principal, Identity, IdentityGroup,
+│               IdentityGroupMembership,
+│               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only)
+│
+├── Local               # Parallel local SQLite for agentic cognitive state
+│   ├── .setup          # Lazy init — creates legionio_local.db on first access
+│   ├── .connection     # Sequel::SQLite::Database handle
+│   ├── .model(:table)  # Create Sequel::Model bound to local connection
+│   ├── .register_migrations(name:, path:)  # Extensions add their own migration dirs
+│   ├── .stats          # Local SQLite metrics (PRAGMAs, file size, registered migrations)
+│   └── .shutdown       # Close local connection
+│
+├── Extract             # 10-handler text extraction registry (txt/md/csv/json/jsonl/html/xlsx/docx/pdf/pptx/vtt)
+├── Spool               # Filesystem write buffer for DB-unavailable scenarios
+├── Rls                 # PostgreSQL row-level security helpers (tenant isolation)
+├── StorageTiers        # Hot/warm/cold archival lifecycle
+├── EventStore          # Append-only governance event store with hash chain integrity
+├── Vector              # Reusable pgvector helpers (cosine_search, l2_search, ensure_extension!)
+└── Settings            # Default configuration with per-adapter credential presets
+```
+
+### Two-Database Architecture
+
+`legion-data` maintains two independent databases:
+
+1. **Shared DB** (SQLite / MySQL / PostgreSQL) — control plane data: extensions, tasks, runners, nodes, settings, audit logs, relationships. Shared across the cluster.
+2. **Local DB** (always SQLite) — agentic cognitive state: memory traces, trust scores, dream journals. On-node only; no cross-database joins.
+
+Deleting `legionio_local.db` provides cryptographic erasure — no residual data.
+
+---
 
 ## Usage
 
 ```ruby
 require 'legion/data'
 
-# Standard setup (shared DB + local SQLite)
+# Set up shared DB + local SQLite, run migrations, load models
 Legion::Data.setup
-Legion::Data.connection              # => Sequel::Database (shared)
-Legion::Data.local.connection        # => Sequel::SQLite::Database (local cognitive state)
+
+# Access the Sequel database handle
+Legion::Data.connection              # => Sequel::Database
+
+# Access models
 Legion::Data::Model::Extension.all  # => Sequel::Dataset
+Legion::Data::Model::Task.first(id: 42)
+Legion::Data::Model::Setting.where(key: 'my_setting').first
+
+# Access local cognitive state DB
+Legion::Data.local.connection        # => Sequel::SQLite::Database
+Legion::Data.local.connected?        # => true
+Legion::Data.local.db_path           # => "legionio_local.db"
+
+# Check connection health
+Legion::Data.connected?              # => true
+Legion::Data.stats                   # => { shared: {...}, local: {...} }
+
+# Shut down both connections
+Legion::Data.shutdown
 ```
 
-### Local Database
+### Local Database (Agentic Cognitive State)
 
-`Legion::Data::Local` is a parallel SQLite database always stored locally on the node. Used for agentic cognitive state persistence (memory traces, trust scores, dream journals) and is independent of the shared database.
+Extensions register their own migration directories and create models bound to the local connection:
 
 ```ruby
-# Local DB is set up automatically during Legion::Data.setup
-# Extensions register their own migration directories
+# Register extension migrations (called during extension setup)
 Legion::Data::Local.register_migrations(name: :memory, path: '/path/to/migrations')
 
-# Create a model bound to the local connection
-MyModel = Legion::Data::Local.model(:my_table)
-
-# Check status
-Legion::Data::Local.connected?   # => true
-Legion::Data::Local.db_path      # => "legionio_local.db"
+# Create a model class bound to the local DB
+MyMemoryTrace = Legion::Data::Local.model(:memory_traces)
+MyMemoryTrace.all  # queries legionio_local.db, never the shared DB
 ```
-
-Deleting `legionio_local.db` provides cryptographic erasure — no residual data.
 
 ### Text Extraction
 
-`Legion::Data::Extract` provides a 10-handler registry for extracting text from documents. Supports: `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`, `.xlsx`, `.docx`, `.pdf`, `.pptx`. Used by `lex-knowledge` for corpus ingestion.
+`Legion::Data::Extract` provides a handler registry for extracting text from documents, used by `lex-knowledge` for corpus ingestion:
 
 ```ruby
 text = Legion::Data::Extract.extract('/path/to/document.pdf')
+text = Legion::Data::Extract.extract('/path/to/data.csv')
 ```
 
-### Row-Level Security
+Supported formats: `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`, `.xlsx`, `.docx`, `.pdf`, `.pptx`, `.vtt`
 
-`Legion::Data::Rls` provides tenant isolation helpers for PostgreSQL (migration 043). Sets `app.current_tenant_id` session variable before queries and resets it after.
+### Filesystem Spool (Write Buffer)
 
-### Spool (Filesystem Buffer)
-
-`Legion::Data::Spool` provides a filesystem-backed write buffer. When the database is unavailable, data is written to `~/.legionio/data/spool/` and replayed once the connection is restored.
+When the database is unavailable, `Legion::Data::Spool` buffers writes to `~/.legionio/data/spool/` and replays once the connection is restored:
 
 ```ruby
 spool = Legion::Data::Spool.for(Legion::Extensions::MyLex)
@@ -107,7 +155,29 @@ spool.write({ task_id: SecureRandom.uuid, data: payload })
 spool.drain { |entry| process(entry) }
 ```
 
+### Row-Level Security (PostgreSQL)
+
+`Legion::Data::Rls` provides tenant isolation via PostgreSQL session variables (migration 043):
+
+```ruby
+Legion::Data::Rls.with_tenant(tenant_id) do
+  Legion::Data::Model::Task.all  # scoped to tenant_id via RLS policy
+end
+```
+
+### Permission Checks
+
+```ruby
+Legion::Data.can_write?(:tasks)  # => true (SQLite always true)
+Legion::Data.can_read?(:tasks)   # => true
+Legion::Data.reset_privileges!   # clear cached privilege checks
+```
+
+---
+
 ## Configuration
+
+All settings live under the `data` key. The adapter controls which options apply.
 
 ### SQLite (default)
 
@@ -163,17 +233,56 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
 
-### Local Database
+### Full Configuration Reference
 
 ```json
 {
   "data": {
+    "adapter": "sqlite",
+    "connected": false,
+    "dev_mode": false,
+    "dev_fallback": true,
+    "connect_on_start": true,
+
+    "max_connections": 25,
+    "pool_timeout": 5,
+    "preconnect": "concurrently",
+    "single_threaded": false,
+    "test": true,
+
+    "log": false,
+    "query_log": false,
+    "log_warn_duration": 1,
+    "sql_log_level": "debug",
+
+    "connection_validation": true,
+    "connection_validation_timeout": 600,
+    "connection_expiration": true,
+    "connection_expiration_timeout": 14400,
+
+    "read_replica_url": null,
+    "replicas": [],
+
+    "creds": { "database": "legionio.db" },
+
+    "migrations": {
+      "continue_on_fail": false,
+      "auto_migrate": true
+    },
+    "models": {
+      "continue_on_load_fail": false,
+      "autoload": true
+    },
     "local": {
       "enabled": true,
       "database": "legionio_local.db",
-      "migrations": {
-        "auto_migrate": true
-      }
+      "migrations": { "auto_migrate": true }
+    },
+    "cache": {
+      "connected": false,
+      "auto_enable": false,
+      "static_cache": false,
+      "ttl": 60
     }
   }
 }
@@ -181,25 +290,160 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 ### Dev Mode Fallback
 
-When `dev_mode: true` and a network database is unreachable, the shared connection falls back to SQLite automatically:
+When `dev_mode: true` and a network database is unreachable, the shared connection automatically falls back to SQLite:
 
 ```json
-{
-  "data": {
-    "dev_mode": true,
-    "dev_fallback": true
-  }
-}
+{ "data": { "dev_mode": true, "dev_fallback": true } }
 ```
 
 ### HashiCorp Vault Integration
 
-When Vault is connected, credentials are fetched dynamically from `database/creds/legion`, overriding any static `creds` configuration.
+When Vault is connected, credentials are fetched dynamically from `database/creds/legion`, overriding any static `creds` block.
 
-## Requirements
+### Caching
 
-- Ruby >= 3.4
+Two independent caching tiers, both disabled by default:
 
-## License
+| Tier | Setting | Models | Backend |
+|------|---------|--------|---------|
+| **StaticCache** | `data.cache.static_cache: true` | Extension, Runner, Function | In-process frozen Ruby hash |
+| **External Cache** | `data.cache.auto_enable: true` + `Legion::Cache` | Relationship, Node, Setting | Redis/Memcached/Memory |
 
-Apache-2.0
+```ruby
+# After hot-loading extensions, refresh the static cache:
+Legion::Data.reload_static_cache
+```
+
+### Read Replicas (PostgreSQL)
+
+```json
+{
+  "data": {
+    "read_replica_url": "postgres://user:pass@replica1/db",
+    "replicas": ["postgres://user:pass@replica2/db"]
+  }
+}
+```
+
+---
+
+## Data Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `Extension` | `extensions` | Installed LEX extensions |
+| `Function` | `functions` | Available functions per extension (with embeddings) |
+| `Runner` | `runners` | Runner definitions (AMQP routing keys) |
+| `Node` | `nodes` | Cluster node registry |
+| `Task` | `tasks` | Task instances |
+| `TaskLog` | `task_logs` | Task execution logs |
+| `Setting` | `settings` | Persistent settings store |
+| `DigitalWorker` | `digital_workers` | Digital worker registry |
+| `Relationship` | `relationships` | Task trigger/action chains between functions |
+| `Chain` | `chains` | Task execution chains |
+| `AuditLog` | `audit_log` | Tamper-evident audit trail with hash chain |
+| `AuditRecord` | `audit_records` | Structured audit records |
+| `RbacRoleAssignment` | `rbac_role_assignments` | RBAC principal -> role mappings |
+| `RbacRunnerGrant` | `rbac_runner_grants` | Per-runner permission grants |
+| `RbacCrossTeamGrant` | `rbac_cross_team_grants` | Cross-team access grants |
+| `IdentityProvider` | `identity_providers` | Identity provider registrations |
+| `Principal` | `principals` | Authentication principals |
+| `Identity` | `identities` | Identity records tied to principals |
+| `IdentityGroup` | `identity_groups` | Identity groups |
+| `IdentityGroupMembership` | `identity_group_memberships` | Group membership records |
+| `ApolloEntry` | `apollo_entries` | Knowledge entries — PostgreSQL only (pgvector) |
+| `ApolloRelation` | `apollo_relations` | Relations between Apollo entries — PostgreSQL only |
+| `ApolloExpertise` | `apollo_expertise` | Per-agent domain expertise — PostgreSQL only |
+| `ApolloAccessLog` | `apollo_access_log` | Apollo access audit log — PostgreSQL only |
+
+Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
+
+---
+
+## Dependencies
+
+| Gem | Purpose |
+|-----|---------|
+| `sequel` (>= 5.70) | ORM and migration framework |
+| `sqlite3` (>= 2.0) | SQLite adapter (default, bundled) |
+| `csv` (>= 3.2) | CSV extraction handler |
+| `legion-json` | JSON serialization via Legion::JSON |
+| `legion-logging` (>= 1.5.0) | Structured logging |
+| `legion-settings` (>= 1.3.26) | Configuration management |
+| `mysql2` (>= 0.5.5) | MySQL adapter (optional) |
+| `pg` (>= 1.5) | PostgreSQL adapter (optional) |
+
+---
+
+## Migrations
+
+71 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+
+| Range | What was added |
+|-------|---------------|
+| 001–011 | Core schema: nodes, settings, extensions, runners, functions, tasks, digital workers, value metrics |
+| 012 | Apollo tables (PG only: pgvector, uuid-ossp, 4 tables) |
+| 013–014 | Relationships table with trigger/action FK chains |
+| 015 | RBAC tables |
+| 017–019 | Audit log with tamper-evident hash chain |
+| 020–025 | Webhooks, archive tables, memory traces, tenant partitions |
+| 026 | Function embeddings (description + vector on functions) |
+| 028–030 | Agent clusters and approval queue |
+| 047–048 | Apollo knowledge capture + financial logging (UAIS cost recovery, 7 tables) |
+| 050 | Critical indexes across 13 tables |
+| 058–067 | Audit records, chains, knowledge tiers, tool embedding cache, identity system (providers, principals, identities, groups) |
+| 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
+
+Run migrations standalone:
+
+```bash
+bundle exec legionio_migrate
+```
+
+---
+
+## CLI Executable
+
+`exe/legionio_migrate` runs database migrations standalone, outside the full LegionIO service:
+
+```bash
+bundle exec legionio_migrate
+```
+
+---
+
+## Role in LegionIO
+
+`legion-data` is optional but provides core platform persistence. It initializes during `Legion::Service` startup (after transport). Key responsibilities:
+
+1. Extension and function registry
+2. Task scheduling, logging, and relationship chains
+3. Node cluster membership tracking
+4. Persistent settings storage
+5. Digital worker registry (AI-as-labor platform)
+6. RBAC assignment tables
+7. Audit log with tamper-evident hash chain
+8. Governance event store with append-only integrity
+9. Apollo shared knowledge store (PostgreSQL + pgvector, used by `lex-apollo`)
+10. Local SQLite for agentic cognitive state — always on-node, independent of shared DB
+11. Financial logging for UAIS cost recovery
+12. Global tool embedding cache (L4 tier for `Legion::Tools::EmbeddingCache`)
+13. Unified identity system (providers, principals, identities, groups)
+
+---
+
+## Contributing
+
+```bash
+git clone https://github.com/LegionIO/legion-data
+cd legion-data
+bundle install
+bundle exec rspec        # all tests must pass
+bundle exec rubocop -A   # zero offenses expected
+```
+
+Follow the [LegionIO contribution guide](https://github.com/LegionIO/.github/blob/main/CONTRIBUTING.md). Open a PR against `main`.
+
+---
+
+**Maintained by**: Matthew Iverson ([@Esity](https://github.com/Esity))

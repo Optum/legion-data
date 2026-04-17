@@ -159,7 +159,7 @@ module Legion
 
         def json_dump(obj)
           if defined?(Legion::JSON)
-            Legion::JSON.dump(obj)
+            Legion::JSON.generate(obj)
           else
             ::JSON.generate(obj)
           end
