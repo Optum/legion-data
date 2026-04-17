@@ -52,4 +52,10 @@ RSpec.describe 'Legion::Data::Connection' do
       .to eq Legion::Settings[:data][:log_warn_duration]
     expect(Legion::Data::Connection.sequel.sql_log_level).to eq Legion::Settings[:data][:sql_log_level].to_sym
   end
+
+  describe 'connection_validation_timeout default' do
+    it 'defaults to -1 so every checkout validates liveness' do
+      expect(Legion::Data::Settings.default[:connection_validation_timeout]).to eq(-1)
+    end
+  end
 end
