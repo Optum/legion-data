@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.6.27] - 2026-04-17
+
+### Fixed
+- `load_sequel_model` now reads `settings[:models][:continue_on_load_fail]` (was erroneously reading `continue_on_fail`, a key that never existed — LoadError was always re-raised regardless of the setting). (Fixes #22)
+- `load_models` now skips model loading when `settings[:models][:autoload]` is `false`, honoring the documented knob. (Fixes #22)
+- Audit record live-path specs (`append`, `verify`, `walk`, `query_by_type`, immutability guards) are now self-sufficient: the `before` block reconnects the DB if a prior spec tore it down, eliminating 19 pending examples when running the full suite. (Fixes #22)
+- Default `preconnect` changed from `'concurrently'` to `false`. The concurrent preconnect mode spawned background threads that emitted noisy connection errors when a network adapter was unreachable before dev-fallback could catch the failure. `false` preserves identical behavior for SQLite (default) and avoids the noise for production deployments where operators can opt-in explicitly. (Fixes #22)
+
 ## [1.6.26] - 2026-04-17
 
 ### Fixed

@@ -35,7 +35,7 @@ module Legion
           # Connection pool
           max_connections:               25,
           pool_timeout:                  5,
-          preconnect:                    'concurrently',
+          preconnect:                    false,
           single_threaded:               false,
           test:                          true,
           name:                          nil,

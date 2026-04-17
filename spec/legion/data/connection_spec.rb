@@ -58,4 +58,10 @@ RSpec.describe 'Legion::Data::Connection' do
       expect(Legion::Data::Settings.default[:connection_validation_timeout]).to eq(-1)
     end
   end
+
+  describe 'preconnect default' do
+    it 'defaults to false to avoid background thread noise on failed network connects' do
+      expect(Legion::Data::Settings.default[:preconnect]).to eq(false)
+    end
+  end
 end

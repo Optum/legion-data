@@ -98,7 +98,9 @@ RSpec.describe Legion::Data::AuditRecord do
   # Integration — live SQLite database
   # -------------------------------------------------------------------------
   context 'with a live database', :aggregate_failures do
-    before { skip 'No DB connection' unless Legion::Data.connected? }
+    before do
+      Legion::Data::Connection.setup unless Legion::Data.connected?
+    end
 
     describe '.append' do
       it 'inserts a record and returns chain metadata' do
