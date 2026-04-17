@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.6.26] - 2026-04-17
+
+### Fixed
+- `connection_validation_timeout` default reduced from 600s to -1 (validate every checkout) for non-SQLite adapters. The previous 10-minute window meant stale PG connections from a VPN drop, sleep/wake, or network interface change were not evicted until the next scheduled validation cycle, causing `Sequel::DatabaseDisconnectError` to repeat on every actor tick. With -1, Sequel pings the connection on every pool checkout and discards dead connections immediately. (Fixes #28)
+
 ## [1.6.24] - 2026-04-13
 
 ### Added
