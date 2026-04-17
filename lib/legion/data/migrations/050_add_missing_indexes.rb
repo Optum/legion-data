@@ -166,10 +166,11 @@ Sequel.migration do
     ].each do |table, indexes|
       next unless table_exists?(table)
 
-      alter_table(table) do
-        indexes.each do |idx_name|
-          drop_index nil, name: idx_name, if_exists: true
-        end
+      existing_indexes = indexes(table).keys
+      indexes.each do |idx_name|
+        next unless existing_indexes.include?(idx_name)
+
+        alter_table(table) { drop_index nil, name: idx_name }
       end
     end
   end
