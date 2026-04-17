@@ -25,7 +25,7 @@ module Legion
           conn = Legion::Data.connection
           conn.transaction do
             parent_hash = latest_chain_hash(conn, chain_id)
-            ts          = Time.now
+            ts          = truncate_to_us(Time.now)
             ch          = compute_chain_hash(parent_hash, content_hash, ts, content_type)
             sig         = sign ? sign_record(ch) : nil
             meta_json   = metadata.empty? ? nil : Legion::JSON.dump(metadata)
@@ -104,31 +104,35 @@ module Legion
           ds.order(Sequel.desc(:created_at)).limit(limit).all.map { |r| deserialize(r) }
         end
 
-        # SHA-256 of "parent_hash:content_hash:unix_ts_ns:content_type".
+        # SHA-256 of "parent_hash:content_hash:unix_ts_us:content_type".
         #
-        # The timestamp is normalised to nanoseconds-since-epoch so the hash is
-        # independent of time zone, string formatting, and database type.
-        # Exposed as a public method so callers can independently verify a hash
-        # without querying the database.
+        # The timestamp is normalised to microseconds-since-epoch. PostgreSQL
+        # TIMESTAMP columns have microsecond precision, so nanosecond values
+        # written by Ruby would be truncated on read, causing recomputed hashes
+        # to diverge. Microsecond normalisation keeps write-time and read-time
+        # hashes identical across all supported adapters.
         def compute_chain_hash(parent_hash, content_hash, timestamp, content_type)
-          ts_ns = normalise_timestamp_ns(timestamp)
-          Digest::SHA256.hexdigest("#{parent_hash}:#{content_hash}:#{ts_ns}:#{content_type}")
+          ts_us = normalise_timestamp_us(timestamp)
+          Digest::SHA256.hexdigest("#{parent_hash}:#{content_hash}:#{ts_us}:#{content_type}")
         end
 
         private
 
-        # Normalise a timestamp to integer nanoseconds-since-epoch regardless of
-        # whether the database returned a Time, DateTime, or String.
-        def normalise_timestamp_ns(timestamp)
-          case timestamp
-          when ::Time
-            (timestamp.to_r * 1_000_000_000).to_i
-          when ::DateTime
-            (timestamp.to_time.to_r * 1_000_000_000).to_i
-          else
-            ts = ::Time.parse(timestamp.to_s)
-            (ts.to_r * 1_000_000_000).to_i
-          end
+        # Normalise a timestamp to integer microseconds-since-epoch regardless of
+        # whether the database returned a Time, DateTime, or String. Always uses
+        # the absolute epoch value so timezone differences don't affect the hash.
+        def normalise_timestamp_us(timestamp)
+          t = case timestamp
+              when ::Time     then timestamp
+              when ::DateTime then timestamp.to_time
+              else ::Time.parse(timestamp.to_s)
+              end
+          (t.to_r * 1_000_000).to_i
+        end
+
+        def truncate_to_us(time)
+          us = (time.to_r * 1_000_000).to_i
+          ::Time.at(Rational(us, 1_000_000))
         end
 
         def latest_chain_hash(conn, chain_id)

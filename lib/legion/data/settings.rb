@@ -35,7 +35,7 @@ module Legion
           # Connection pool
           max_connections:               25,
           pool_timeout:                  5,
-          preconnect:                    'concurrently',
+          preconnect:                    false,
           single_threaded:               false,
           test:                          true,
           name:                          nil,
@@ -48,8 +48,9 @@ module Legion
           sql_log_level:                 'debug',
 
           # Connection health (network adapters only, ignored for sqlite)
+          # -1 means validate on every checkout, catching stale connections from VPN/sleep/network changes immediately
           connection_validation:         true,
-          connection_validation_timeout: 600,
+          connection_validation_timeout: -1,
           connection_expiration:         true,
           connection_expiration_timeout: 14_400,
 

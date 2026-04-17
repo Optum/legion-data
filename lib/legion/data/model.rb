@@ -37,7 +37,7 @@ module Legion
           model
         rescue LoadError => e
           handle_exception(e, level: :fatal, operation: :load_sequel_model, model: model)
-          raise e unless Legion::Settings[:data][:models][:continue_on_fail]
+          raise e unless Legion::Settings[:data][:models][:continue_on_load_fail]
         end
       end
     end

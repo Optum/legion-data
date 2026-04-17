@@ -64,6 +64,8 @@ module Legion
       end
 
       def load_models
+        return unless Legion::Settings[:data][:models][:autoload] != false
+
         Legion::Data::Models.load
       end
 
