@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.6.28] - 2026-04-17
+
+### Changed
+- `legion-json` added as explicit gemspec runtime dependency — `Legion::JSON` is used throughout and was previously only an implicit transitive dependency
+- Rewrote `README.md` with accurate architecture diagram, full model table, migration history, configuration reference, and usage examples
+- Updated `CLAUDE.md` with mandatory `bundle exec rspec` + `bundle exec rubocop -A` reminder for AI agents
+- Added `AGENTS.md` with mandatory rspec/rubocop reminder and gem overview
+- Updated `.github/CODEOWNERS` to `@Esity @LegionIO/core`
+- Added `*.gem` to `.gitignore` to prevent build artifacts from being committed
+- Removed `sonar-project.properties`
+
 ## [1.6.27] - 2026-04-17
 
 ### Fixed
