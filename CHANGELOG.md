@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [1.6.27] - 2026-04-17
+
+### Fixed
+- `load_sequel_model` now reads `settings[:models][:continue_on_load_fail]` (was erroneously reading `continue_on_fail`, a key that never existed — LoadError was always re-raised regardless of the setting). (Fixes #22)
+- `load_models` now skips model loading when `settings[:models][:autoload]` is `false`, honoring the documented knob. (Fixes #22)
+- Audit record live-path specs (`append`, `verify`, `walk`, `query_by_type`, immutability guards) are now self-sufficient: the `before` block reconnects the DB if a prior spec tore it down, eliminating 19 pending examples when running the full suite. (Fixes #22)
+- Default `preconnect` changed from `'concurrently'` to `false`. The concurrent preconnect mode spawned background threads that emitted noisy connection errors when a network adapter was unreachable before dev-fallback could catch the failure. `false` preserves identical behavior for SQLite (default) and avoids the noise for production deployments where operators can opt-in explicitly. (Fixes #22)
+
+## [1.6.26] - 2026-04-17
+
+### Fixed
+- `connection_validation_timeout` default reduced from 600s to -1 (validate every checkout) for non-SQLite adapters. The previous 10-minute window meant stale PG connections from a VPN drop, sleep/wake, or network interface change were not evicted until the next scheduled validation cycle, causing `Sequel::DatabaseDisconnectError` to repeat on every actor tick. With -1, Sequel pings the connection on every pool checkout and discards dead connections immediately. (Fixes #28)
+
 ## [1.6.24] - 2026-04-13
 
 ### Added
