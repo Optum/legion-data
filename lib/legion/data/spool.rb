@@ -9,6 +9,7 @@ module Legion
   module Data
     module Spool
       EXTENSION_PREFIX = 'Legion::Extensions::'
+      LEGION_PREFIX    = 'Legion::'
 
       class << self
         def root
@@ -25,9 +26,13 @@ module Legion
 
         def extension_path(extension_module)
           name = extension_module.name
-          raise ArgumentError, "#{name} is not under Legion::Extensions::" unless name&.start_with?(EXTENSION_PREFIX)
-
-          name.delete_prefix(EXTENSION_PREFIX).gsub('::', '/').downcase
+          if name&.start_with?(EXTENSION_PREFIX)
+            name.delete_prefix(EXTENSION_PREFIX).gsub('::', '/').downcase
+          elsif name&.start_with?(LEGION_PREFIX)
+            name.delete_prefix(LEGION_PREFIX).gsub('::', '/').downcase
+          else
+            raise ArgumentError, "#{name} is not under the Legion:: namespace"
+          end
         end
       end
 

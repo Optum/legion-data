@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.6.30] - 2026-04-22
+
+### Fixed
+- `Spool.extension_path` now accepts any module under `Legion::`, not just `Legion::Extensions::` — fixes `ArgumentError` when core gems like `legion-llm` spool events via `Spool.for(Legion::LLM)`
+
 ## [1.6.29] - 2026-04-17
 
 ### Fixed
