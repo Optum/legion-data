@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-04-24
+
+### Added
+- Migration 072: `identity_audit_log` table (Postgres-only) with indexes
+- Migration 073: `employee_id` on principals, `account_type`/`qualifier`/`is_default`/`link_evidence` on identities, partial unique index for one-default-per-provider
+- `IdentityAuditLog` model added to model loader
+
 ## [1.6.30] - 2026-04-22
 
 ### Fixed
