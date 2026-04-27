@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-04-27
+
+### Fixed
+- Dev-fallback to SQLite now logs at `:error` level with explicit warnings that data written to SQLite will not be visible when the configured network database reconnects.
+
+### Added
+- `Connection.connection_info` — returns adapter, connection state, and fallback status for health checks and diagnostics
+- `Connection.fallback_active?` — returns true when the data layer fell back to SQLite from a configured network database; Apollo and other services can check this to detect degraded mode and log appropriate warnings
+
 ## [1.7.1] - 2026-04-27
 
 ### Fixed

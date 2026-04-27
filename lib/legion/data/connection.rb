@@ -163,16 +163,22 @@ module Legion
         def setup
           opts = sequel_opts
           log.info("Legion::Data::Connection setup adapter=#{adapter}")
+          @fallback_active = false
           @sequel = if adapter == :sqlite
                       ::Sequel.connect(opts.merge(adapter: :sqlite, database: sqlite_path))
                     else
+                      attempted_adapter = adapter
                       begin
-                        ::Sequel.connect(connection_opts_for(adapter: adapter, opts: opts))
+                        ::Sequel.connect(connection_opts_for(adapter: attempted_adapter, opts: opts))
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        handle_exception(e, level: :warn, handled: true, operation: :shared_connect, fallback: :sqlite)
+                        log.error("Legion::Data FALLING BACK TO SQLITE — #{attempted_adapter} connection failed: #{e.message}")
+                        log.error("Legion::Data WARNING: Data written to SQLite will NOT be visible when #{attempted_adapter} reconnects. " \
+                                  'Apollo knowledge, audit logs, and other DB-backed services will use a local-only store.')
+                        handle_exception(e, level: :error, handled: true, operation: :shared_connect, fallback: :sqlite)
                         @adapter = :sqlite
+                        @fallback_active = true
                         sqlite_opts = sequel_opts
                         ::Sequel.connect(sqlite_opts.merge(adapter: :sqlite, database: sqlite_path))
                       end
@@ -181,6 +187,25 @@ module Legion
           log_connection_info
           configure_extensions
           connect_with_replicas
+        end
+
+        # Returns connection metadata for health checks and diagnostics.
+        # Apollo and other services can use this to detect silent fallback.
+        def connection_info
+          {
+            adapter:            adapter,
+            connected:          Legion::Settings[:data][:connected],
+            fallback_active:    @fallback_active || false,
+            configured_adapter: Legion::Settings[:data][:adapter]&.to_sym || :sqlite,
+            sequel_alive:       (begin; !@sequel&.test_connection.nil?; rescue StandardError; false; end)
+          }
+        end
+
+        # Returns true if the data layer fell back to SQLite from a configured
+        # network database (PostgreSQL/MySQL). Services should check this and
+        # log warnings when operating in degraded mode.
+        def fallback_active?
+          @fallback_active == true
         end
 
         def stats
