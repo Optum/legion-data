@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.6.31] - 2026-04-27
+
+### Fixed
+- Dev-fallback to SQLite now logs at `:error` level (was `:warn`) with explicit warnings that data written to SQLite will NOT be visible when PostgreSQL reconnects — previously the fallback was nearly silent, causing Apollo knowledge entries and other DB-backed data to silently disappear when the connection state changed
+
+### Added
+- `Connection.connection_info` — returns adapter, connection state, and fallback status for health checks and diagnostics
+- `Connection.fallback_active?` — returns true when the data layer fell back to SQLite from a configured network database; Apollo and other services can check this to detect degraded mode and log appropriate warnings
+
+
 ## [1.6.29] - 2026-04-17
 
 ### Fixed

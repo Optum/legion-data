@@ -163,8 +163,12 @@ module Legion
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        handle_exception(e, level: :warn, handled: true, operation: :shared_connect, fallback: :sqlite)
+                        log.error("Legion::Data FALLING BACK TO SQLITE — PostgreSQL connection failed: #{e.message}")
+                        log.error('Legion::Data WARNING: Data written to SQLite will NOT be visible when PG reconnects. ' \
+                                  'Apollo knowledge, audit logs, and other DB-backed services will use a local-only store.')
+                        handle_exception(e, level: :error, handled: true, operation: :shared_connect, fallback: :sqlite)
                         @adapter = :sqlite
+                        @fallback_active = true
                         sqlite_opts = sequel_opts
                         ::Sequel.connect(sqlite_opts.merge(adapter: :sqlite, database: sqlite_path))
                       end
@@ -173,6 +177,25 @@ module Legion
           log_connection_info
           configure_extensions
           connect_with_replicas
+        end
+
+        # Returns connection metadata for health checks and diagnostics.
+        # Apollo and other services can use this to detect silent fallback.
+        def connection_info
+          {
+            adapter:          adapter,
+            connected:        Legion::Settings[:data][:connected],
+            fallback_active:  @fallback_active || false,
+            configured_adapter: Legion::Settings[:data][:adapter]&.to_sym || :sqlite,
+            sequel_alive:     (begin; @sequel&.test_connection; rescue StandardError; false; end)
+          }
+        end
+
+        # Returns true if the data layer fell back to SQLite from a configured
+        # network database (PostgreSQL/MySQL). Services should check this and
+        # log warnings when operating in degraded mode.
+        def fallback_active?
+          @fallback_active == true
         end
 
         def stats
