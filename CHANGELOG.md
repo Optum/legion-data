@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [1.7.3] - 2026-04-27
+
+### Added
+- Migration 074: widens Apollo `content_hash` to 64 fixed characters and `knowledge_domain` / `source_provider` / `source_agent` to 255 characters so SHA-256 hashes and real-world identifiers fit without ingestion truncation failures. (Fixes #33, #34)
+- Migration 075: adds task `idempotency_key` and `idempotency_expires_at` columns plus indexes for SHA-256 payload deduplication windows. (Fixes #14)
+- Migration 076: adds `extract_step_timings` for per-step Extract pipeline timing visibility. (Fixes #15)
+- `Task.idempotency_key_for`, `Task.find_active_by_idempotency_key`, and `Task.create_idempotent` for stable content-addressed task dispatch deduplication. (Fixes #14)
+- Extract results now include `extract_id` and `step_timings`, and persist timing rows when the migration is present. (Fixes #15)
+- `AuditLogHashChain` plus `AuditLog.compute_hash` / `AuditLog.verify_chain` as the canonical data-side audit log hash-chain implementation for standard write paths to share. (Refs #13)
+
+### Fixed
+- Migration 051 now adds SQLite/MySQL `tasks.created_at` without a non-constant default before backfilling from `created`, allowing later migration specs and fresh SQLite databases to migrate cleanly.
+
 ## [1.7.2] - 2026-04-27
 
 ### Fixed

@@ -139,11 +139,29 @@ MyMemoryTrace.all  # queries legionio_local.db, never the shared DB
 `Legion::Data::Extract` provides a handler registry for extracting text from documents, used by `lex-knowledge` for corpus ingestion:
 
 ```ruby
-text = Legion::Data::Extract.extract('/path/to/document.pdf')
-text = Legion::Data::Extract.extract('/path/to/data.csv')
+result = Legion::Data::Extract.extract('/path/to/document.pdf')
+text = result[:text]
+result[:step_timings] # per-step name, start_time, end_time, status, error, duration_ms
 ```
 
 Supported formats: `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`, `.xlsx`, `.docx`, `.pdf`, `.pptx`, `.vtt`
+
+When migration 076 is present, Extract also persists the same per-step timing rows to `extract_step_timings`
+under the returned `extract_id`.
+
+### Task Idempotency
+
+`Task.idempotency_key_for` computes a stable SHA-256 key from canonical JSON payloads. `Task.create_idempotent`
+returns an existing non-terminal task for the same key inside the optional TTL window, or creates a new task
+with `idempotency_key` and `idempotency_expires_at` populated:
+
+```ruby
+task = Legion::Data::Model::Task.create_idempotent(
+  { status: 'pending', payload: Legion::JSON.dump(payload) },
+  payload: payload,
+  ttl: 300
+)
+```
 
 ### Filesystem Spool (Write Buffer)
 
@@ -343,6 +361,7 @@ Legion::Data.reload_static_cache
 | `Chain` | `chains` | Task execution chains |
 | `AuditLog` | `audit_log` | Tamper-evident audit trail with hash chain |
 | `AuditRecord` | `audit_records` | Structured audit records |
+| `ExtractStepTiming` | `extract_step_timings` | Per-step Extract pipeline timing metadata |
 | `RbacRoleAssignment` | `rbac_role_assignments` | RBAC principal -> role mappings |
 | `RbacRunnerGrant` | `rbac_runner_grants` | Per-runner permission grants |
 | `RbacCrossTeamGrant` | `rbac_cross_team_grants` | Cross-team access grants |
@@ -377,7 +396,7 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 
 ## Migrations
 
-71 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+76 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
 
 | Range | What was added |
 |-------|---------------|
@@ -393,6 +412,7 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 | 050 | Critical indexes across 13 tables |
 | 058–067 | Audit records, chains, knowledge tiers, tool embedding cache, identity system (providers, principals, identities, groups) |
 | 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
+| 072–076 | Identity audit/multi-instance columns, Apollo identifier widening, task idempotency, Extract step timings |
 
 Run migrations standalone:
 
