@@ -2,15 +2,31 @@
 
 ## [Unreleased]
 
-## [1.6.31] - 2026-04-27
+## [1.7.2] - 2026-04-27
 
 ### Fixed
-- Dev-fallback to SQLite now logs at `:error` level (was `:warn`) with explicit warnings that data written to SQLite will NOT be visible when PostgreSQL reconnects — previously the fallback was nearly silent, causing Apollo knowledge entries and other DB-backed data to silently disappear when the connection state changed
+- Dev-fallback to SQLite now logs at `:error` level with explicit warnings that data written to SQLite will not be visible when the configured network database reconnects.
 
 ### Added
 - `Connection.connection_info` — returns adapter, connection state, and fallback status for health checks and diagnostics
 - `Connection.fallback_active?` — returns true when the data layer fell back to SQLite from a configured network database; Apollo and other services can check this to detect degraded mode and log appropriate warnings
 
+## [1.7.1] - 2026-04-27
+
+### Fixed
+- `QueryFileLogger` now treats writes after `close` as no-ops, preventing repeated `IOError: closed stream` warnings from late Sequel query callbacks during shutdown. (Fixes #35)
+
+## [1.7.0] - 2026-04-24
+
+### Added
+- Migration 072: `identity_audit_log` table (Postgres-only) with indexes
+- Migration 073: `employee_id` on principals, `account_type`/`qualifier`/`is_default`/`link_evidence` on identities, partial unique index for one-default-per-provider
+- `IdentityAuditLog` model added to model loader
+
+## [1.6.30] - 2026-04-22
+
+### Fixed
+- `Spool.extension_path` now accepts any module under `Legion::`, not just `Legion::Extensions::` — fixes `ArgumentError` when core gems like `legion-llm` spool events via `Spool.for(Legion::LLM)`
 
 ## [1.6.29] - 2026-04-17
 

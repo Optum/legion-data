@@ -103,12 +103,13 @@ module Legion
 
         def initialize(path)
           @path = path
+          @closed = false
+          @mutex = Mutex.new
           dir = File.dirname(path)
           FileUtils.mkdir_p(dir)
           FileUtils.chmod(0o700, dir) if File.directory?(dir)
           @file = File.open(path, File::WRONLY | File::APPEND | File::CREAT, 0o600)
           @file.sync = true
-          @mutex = Mutex.new
         end
 
         def debug(message)
@@ -128,16 +129,23 @@ module Legion
         end
 
         def close
-          @mutex.synchronize { @file.close unless @file.closed? }
+          @mutex.synchronize do
+            @closed = true
+            @file.close unless @file.closed?
+          end
         end
 
         private
 
         def write(level, message)
           @mutex.synchronize do
+            return if @closed || @file.closed?
+
             @file.puts "[#{Time.now.strftime('%Y-%m-%d %H:%M:%S.%L')}] #{level} #{message}"
           end
         rescue IOError => e
+          return nil if @closed || @file.closed?
+
           handle_exception(e, level: :warn, handled: true, operation: :query_file_write, path: @path)
           nil
         end
@@ -155,16 +163,18 @@ module Legion
         def setup
           opts = sequel_opts
           log.info("Legion::Data::Connection setup adapter=#{adapter}")
+          @fallback_active = false
           @sequel = if adapter == :sqlite
                       ::Sequel.connect(opts.merge(adapter: :sqlite, database: sqlite_path))
                     else
+                      attempted_adapter = adapter
                       begin
-                        ::Sequel.connect(connection_opts_for(adapter: adapter, opts: opts))
+                        ::Sequel.connect(connection_opts_for(adapter: attempted_adapter, opts: opts))
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        log.error("Legion::Data FALLING BACK TO SQLITE — PostgreSQL connection failed: #{e.message}")
-                        log.error('Legion::Data WARNING: Data written to SQLite will NOT be visible when PG reconnects. ' \
+                        log.error("Legion::Data FALLING BACK TO SQLITE — #{attempted_adapter} connection failed: #{e.message}")
+                        log.error("Legion::Data WARNING: Data written to SQLite will NOT be visible when #{attempted_adapter} reconnects. " \
                                   'Apollo knowledge, audit logs, and other DB-backed services will use a local-only store.')
                         handle_exception(e, level: :error, handled: true, operation: :shared_connect, fallback: :sqlite)
                         @adapter = :sqlite
@@ -183,11 +193,11 @@ module Legion
         # Apollo and other services can use this to detect silent fallback.
         def connection_info
           {
-            adapter:          adapter,
-            connected:        Legion::Settings[:data][:connected],
-            fallback_active:  @fallback_active || false,
+            adapter:            adapter,
+            connected:          Legion::Settings[:data][:connected],
+            fallback_active:    @fallback_active || false,
             configured_adapter: Legion::Settings[:data][:adapter]&.to_sym || :sqlite,
-            sequel_alive:     (begin; @sequel&.test_connection; rescue StandardError; false; end)
+            sequel_alive:       (begin; !@sequel&.test_connection.nil?; rescue StandardError; false; end)
           }
         end
 

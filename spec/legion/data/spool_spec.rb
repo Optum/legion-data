@@ -14,6 +14,8 @@ module Legion
     module Metering; end
     module Audit; end
   end
+
+  module LLM; end
 end
 
 RSpec.describe Legion::Data::Spool do
@@ -45,8 +47,14 @@ RSpec.describe Legion::Data::Spool do
       expect(spool).to be_a(Legion::Data::Spool::ScopedSpool)
     end
 
-    it 'rejects modules not under Legion::Extensions' do
-      expect { described_class.for(String) }.to raise_error(ArgumentError, /not under Legion::Extensions/)
+    it 'rejects modules not under the Legion namespace' do
+      expect { described_class.for(String) }.to raise_error(ArgumentError, /not under the Legion:: namespace/)
+    end
+
+    it 'accepts core gem modules under Legion::' do
+      spool = described_class.for(Legion::LLM)
+      spool.write(:metering, { test: true })
+      expect(Dir.exist?(File.join(tmpdir, 'llm/metering'))).to be true
     end
 
     it 'derives path from module name' do

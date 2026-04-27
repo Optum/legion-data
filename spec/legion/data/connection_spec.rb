@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tmpdir'
 
 RSpec.describe 'Legion::Data::Connection' do
   after(:each) do
@@ -62,6 +63,29 @@ RSpec.describe 'Legion::Data::Connection' do
   describe 'preconnect default' do
     it 'defaults to false to avoid background thread noise on failed network connects' do
       expect(Legion::Data::Settings.default[:preconnect]).to eq(false)
+    end
+  end
+
+  describe Legion::Data::Connection::QueryFileLogger do
+    around do |example|
+      Dir.mktmpdir('legion-data-query-log') do |dir|
+        @query_log_path = File.join(dir, 'query.log')
+        example.run
+      end
+    end
+
+    it 'ignores debug writes after close without warning' do
+      logger = described_class.new(@query_log_path)
+      logger.close
+
+      expect(logger).not_to receive(:handle_exception)
+      expect { logger.debug('SELECT 1') }.not_to raise_error
+    end
+
+    it 'allows repeated close calls' do
+      logger = described_class.new(@query_log_path)
+
+      expect { 2.times { logger.close } }.not_to raise_error
     end
   end
 end
