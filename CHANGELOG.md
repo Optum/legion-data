@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-04-27
+
+### Fixed
+- `QueryFileLogger` now treats writes after `close` as no-ops, preventing repeated `IOError: closed stream` warnings from late Sequel query callbacks during shutdown. (Fixes #35)
+
 ## [1.7.0] - 2026-04-24
 
 ### Added

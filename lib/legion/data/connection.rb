@@ -103,12 +103,13 @@ module Legion
 
         def initialize(path)
           @path = path
+          @closed = false
+          @mutex = Mutex.new
           dir = File.dirname(path)
           FileUtils.mkdir_p(dir)
           FileUtils.chmod(0o700, dir) if File.directory?(dir)
           @file = File.open(path, File::WRONLY | File::APPEND | File::CREAT, 0o600)
           @file.sync = true
-          @mutex = Mutex.new
         end
 
         def debug(message)
@@ -128,16 +129,23 @@ module Legion
         end
 
         def close
-          @mutex.synchronize { @file.close unless @file.closed? }
+          @mutex.synchronize do
+            @closed = true
+            @file.close unless @file.closed?
+          end
         end
 
         private
 
         def write(level, message)
           @mutex.synchronize do
+            return if @closed || @file.closed?
+
             @file.puts "[#{Time.now.strftime('%Y-%m-%d %H:%M:%S.%L')}] #{level} #{message}"
           end
         rescue IOError => e
+          return nil if @closed || @file.closed?
+
           handle_exception(e, level: :warn, handled: true, operation: :query_file_write, path: @path)
           nil
         end
