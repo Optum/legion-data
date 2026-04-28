@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.7.4] - 2026-04-28
+
+### Fixed
+- Pre-commit RuboCop hook now distinguishes missing tools from real RuboCop failures and propagates failures instead of silently passing.
+- Ruby syntax pre-commit hook now checks every staged Ruby file instead of only the first argument.
+- Connection setup now refreshes the configured adapter before each setup call and clears fallback state on shutdown so fallback health checks do not stay stale across reconnects.
+
+### Changed
+- README refreshed for the current migration count, version line, fallback diagnostics, pre-commit workflow, and recent model surface.
+
 ## [1.7.3] - 2026-04-27
 
 ### Added
