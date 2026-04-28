@@ -3,10 +3,11 @@
 require 'spec_helper'
 require 'fileutils'
 
-RSpec.describe 'Legion::Data::Connection health check methods' do
+RSpec.describe Legion::Data::Connection do
   let(:test_db) { 'legionio_connection_info_test.db' }
 
   before(:each) do
+    @mutated_connection = false
     @saved_adapter = Legion::Settings[:data][:adapter]
     @saved_creds = Legion::Settings[:data][:creds].dup
     @saved_dev_mode = Legion::Settings[:data][:dev_mode]
@@ -18,10 +19,12 @@ RSpec.describe 'Legion::Data::Connection health check methods' do
   end
 
   after(:each) do
-    begin
-      described_class.shutdown
-    rescue StandardError
-      nil
+    if @mutated_connection
+      begin
+        described_class.shutdown
+      rescue StandardError
+        nil
+      end
     end
 
     described_class.instance_variable_set(:@adapter, @saved_ivar_adapter)
@@ -61,6 +64,7 @@ RSpec.describe 'Legion::Data::Connection health check methods' do
     end
 
     it 'returns true after a deterministic network adapter fallback' do
+      @mutated_connection = true
       described_class.instance_variable_set(:@adapter, nil)
       described_class.instance_variable_set(:@sequel, nil)
       described_class.instance_variable_set(:@fallback_active, false)
