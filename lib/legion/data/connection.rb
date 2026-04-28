@@ -161,6 +161,7 @@ module Legion
         end
 
         def setup
+          @adapter = Legion::Settings[:data][:adapter]&.to_sym || :sqlite
           opts = sequel_opts
           log.info("Legion::Data::Connection setup adapter=#{adapter}")
           @fallback_active = false
@@ -173,7 +174,7 @@ module Legion
                       rescue StandardError => e
                         raise unless dev_fallback?
 
-                        log.error("Legion::Data FALLING BACK TO SQLITE — #{attempted_adapter} connection failed: #{e.message}")
+                        log.error("Legion::Data FALLING BACK TO SQLITE — #{attempted_adapter} network DB connection failed: #{e.message}")
                         log.error("Legion::Data WARNING: Data written to SQLite will NOT be visible when #{attempted_adapter} reconnects. " \
                                   'Apollo knowledge, audit logs, and other DB-backed services will use a local-only store.')
                         handle_exception(e, level: :error, handled: true, operation: :shared_connect, fallback: :sqlite)
@@ -261,6 +262,7 @@ module Legion
           @sequel&.disconnect
           @query_file_logger&.close
           @query_file_logger = nil
+          @fallback_active = false
           Legion::Settings[:data][:connected] = false
           log.info 'Legion::Data connection closed'
         end

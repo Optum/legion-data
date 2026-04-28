@@ -1,8 +1,8 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (71 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (76 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.6.25 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+**Version**: 1.7.4 | **Ruby**: >= 3.4 | **License**: Apache-2.0
 
 ---
 
@@ -51,17 +51,19 @@ Legion::Data (singleton module)
 │   ├── .adapter        # Reads adapter from settings (:sqlite, :mysql2, :postgres)
 │   ├── .setup          # Establish connection (dev_mode fallback to SQLite if unreachable)
 │   ├── .sequel         # Raw Sequel::Database accessor
+│   ├── .connection_info  # Adapter, liveness, and fallback diagnostics
+│   ├── .fallback_active? # True when dev fallback moved a network DB to SQLite
 │   ├── .stats          # Pool metrics, tuning snapshot, adapter-specific DB stats
 │   └── .shutdown       # Disconnect and close query file logger
 │
-├── Migration           # Auto-migration system (71 numbered Sequel DSL migrations)
+├── Migration           # Auto-migration system (76 numbered Sequel DSL migrations)
 │
 ├── Model               # Sequel model autoloader
 │   └── Models: Extension, Function, Runner, Node, Task, TaskLog, Setting,
 │               DigitalWorker, Relationship, AuditLog, AuditRecord, Chain,
 │               RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant,
 │               IdentityProvider, Principal, Identity, IdentityGroup,
-│               IdentityGroupMembership,
+│               IdentityGroupMembership, IdentityAuditLog,
 │               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only)
 │
 ├── Local               # Parallel local SQLite for agentic cognitive state
@@ -116,6 +118,10 @@ Legion::Data.local.db_path           # => "legionio_local.db"
 # Check connection health
 Legion::Data.connected?              # => true
 Legion::Data.stats                   # => { shared: {...}, local: {...} }
+
+# Inspect shared DB diagnostics, including dev fallback state
+Legion::Data::Connection.connection_info
+# => { adapter: :sqlite, connected: true, fallback_active: false, ... }
 
 # Shut down both connections
 Legion::Data.shutdown
@@ -296,6 +302,8 @@ When `dev_mode: true` and a network database is unreachable, the shared connecti
 { "data": { "dev_mode": true, "dev_fallback": true } }
 ```
 
+Fallback is intentionally loud. `Connection.setup` logs the degraded mode at error level, `Connection.fallback_active?` returns `true`, and `Connection.connection_info` reports the configured adapter, actual adapter, connection state, and Sequel liveness. Data written during fallback is local-only SQLite data and will not appear in the configured network database after reconnect.
+
 ### HashiCorp Vault Integration
 
 When Vault is connected, credentials are fetched dynamically from `database/creds/legion`, overriding any static `creds` block.
@@ -377,7 +385,7 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 
 ## Migrations
 
-71 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+76 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
 
 | Range | What was added |
 |-------|---------------|
@@ -393,6 +401,8 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 | 050 | Critical indexes across 13 tables |
 | 058–067 | Audit records, chains, knowledge tiers, tool embedding cache, identity system (providers, principals, identities, groups) |
 | 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
+| 072–073 | Identity audit log and multi-instance identity columns |
+| 074–076 | Apollo field width fixes, task idempotency columns, and Extract step timing rows |
 
 Run migrations standalone:
 
@@ -441,6 +451,15 @@ bundle install
 bundle exec rspec        # all tests must pass
 bundle exec rubocop -A   # zero offenses expected
 ```
+
+This repo also includes a pre-commit configuration:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+The local RuboCop hook auto-corrects staged Ruby files when RuboCop is available and fails the commit when RuboCop reports real offenses. The Ruby syntax hook checks every staged Ruby file.
 
 Follow the [LegionIO contribution guide](https://github.com/LegionIO/.github/blob/main/CONTRIBUTING.md). Open a PR against `main`.
 
