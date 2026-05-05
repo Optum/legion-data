@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'spec_helper'
 require 'legion/data/extract'
 require 'legion/data/extract/handlers/text'
 require 'legion/data/extract/handlers/markdown'
@@ -15,6 +16,8 @@ RSpec.describe Legion::Data::Extract do
         result = described_class.extract('test string', type: :auto)
         expect(result[:success]).to be false
         expect(result[:error]).to eq(:unknown_type)
+        expect(result[:extract_id]).to match(/\A[0-9a-f-]{36}\z/)
+        expect(result[:step_timings].map { |step| step[:name] }).to include('detect_type')
       end
     end
 
@@ -61,6 +64,21 @@ RSpec.describe Legion::Data::Extract do
       expect(result[:success]).to be true
       expect(result[:text]).to eq('integration test')
       expect(result[:type]).to eq(:text)
+      expect(result[:step_timings].map { |step| step[:name] }).to include(
+        'detect_type', 'resolve_handler', 'check_availability', 'handler_extract'
+      )
+    ensure
+      f&.close!
+    end
+
+    it 'persists per-step timing metadata when the timing table is available' do
+      f = Tempfile.new(['test', '.txt'])
+      f.write('timed extraction')
+      f.flush
+      result = described_class.extract(f.path)
+      rows = Legion::Data.connection[:extract_step_timings].where(extract_id: result[:extract_id]).all
+      expect(rows.map { |row| row[:name] }).to include('handler_extract')
+      expect(rows.all? { |row| row[:status] == 'success' }).to be true
     ensure
       f&.close!
     end

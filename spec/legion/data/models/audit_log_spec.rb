@@ -92,6 +92,24 @@ RSpec.describe Legion::Data::Model::AuditLog do
     end
   end
 
+  describe '.compute_hash' do
+    it 'delegates to the canonical audit log hash chain' do
+      record = valid_attrs.merge(previous_hash: Legion::Data::AuditLogHashChain::GENESIS_HASH)
+      expect(described_class.compute_hash(record)).to eq(Legion::Data::AuditLogHashChain.compute_hash(record))
+    end
+  end
+
+  describe '.verify_chain' do
+    it 'verifies records with the canonical hash chain' do
+      first_base = valid_attrs.merge(id: 1, previous_hash: Legion::Data::AuditLogHashChain::GENESIS_HASH)
+      first = first_base.merge(record_hash: described_class.compute_hash(first_base))
+      second_base = valid_attrs.merge(id: 2, action: 'archive', previous_hash: first[:record_hash])
+      second = second_base.merge(record_hash: described_class.compute_hash(second_base))
+
+      expect(described_class.verify_chain([first, second])).to eq({ valid: true, length: 2 })
+    end
+  end
+
   describe 'immutability' do
     it 'raises on update' do
       record = described_class.create(**valid_attrs)

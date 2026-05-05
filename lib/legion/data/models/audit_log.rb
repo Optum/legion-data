@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/logging/helper'
+require 'legion/data/audit_log_hash_chain'
 
 module Legion
   module Data
@@ -32,6 +33,14 @@ module Legion
 
         def before_destroy
           raise 'audit_log records are immutable and cannot be deleted'
+        end
+
+        def self.compute_hash(record)
+          Legion::Data::AuditLogHashChain.compute_hash(record)
+        end
+
+        def self.verify_chain(records = order(:created_at, :id).all)
+          Legion::Data::AuditLogHashChain.verify(records)
         end
       end
     end

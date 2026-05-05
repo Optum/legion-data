@@ -14,7 +14,7 @@ Sequel.migration do
     else
       # SQLite/MySQL: add real column and backfill from created
       alter_table(:tasks) do
-        add_column :created_at, DateTime, default: Sequel::CURRENT_TIMESTAMP
+        add_column :created_at, DateTime
       end
 
       run 'UPDATE tasks SET created_at = created WHERE created_at IS NULL'

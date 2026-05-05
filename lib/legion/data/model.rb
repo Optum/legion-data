@@ -14,7 +14,7 @@ module Legion
           %w[extension function relationship chain task runner node setting digital_worker
              apollo_entry apollo_relation apollo_expertise apollo_access_log audit_log
              audit_record identity_provider principal identity identity_group
-             identity_group_membership identity_audit_log
+             identity_group_membership identity_audit_log extract_step_timing
              identity/identity identity/principal identity/providers identity/group
              identity/group_memberships identity/audit_log
              apollo/entries apollo/relation apollo/access_log apollo/expertise
