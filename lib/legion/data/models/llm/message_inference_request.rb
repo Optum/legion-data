@@ -11,10 +11,6 @@ module Legion
 
           many_to_one :conversation
           many_to_one :latest_message, class: 'Legion::Data::Model::LLM::Message', key: :latest_message_id
-          many_to_one :caller_principal, class: 'Legion::Data::Model::Identity::Principal',
-                                         key:   :caller_principal_id
-          many_to_one :caller_identity, class: 'Legion::Data::Model::Identity::Identity',
-                                        key:   :caller_identity_id
           one_to_many :message_inference_responses
           one_to_many :route_attempts
           one_to_many :message_inference_metrics
@@ -64,6 +60,18 @@ module Legion
 
           def request
             self
+          end
+
+          def caller_principal
+            return nil unless caller_principal_id && defined?(Legion::Data::Model::Identity::Principal)
+
+            Legion::Data::Model::Identity::Principal.first(id: caller_principal_id)
+          end
+
+          def caller_identity
+            return nil unless caller_identity_id && defined?(Legion::Data::Model::Identity::Identity)
+
+            Legion::Data::Model::Identity::Identity.first(id: caller_identity_id)
           end
         end
       end
