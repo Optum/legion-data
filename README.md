@@ -6,6 +6,23 @@ Persistent database storage for the [LegionIO](https://github.com/LegionIO/Legio
 
 ---
 
+## What It Owns
+
+`legion-data` is the data contract for LegionIO. It owns database connectivity, migrations, model loading, and portable Sequel model definitions for shared platform state. HTTP routes, runtime orchestration, and extension behavior live in other LegionIO repos and call into these models.
+
+Core responsibilities:
+
+| Area | Tables and models |
+|------|-------------------|
+| Control plane | extensions, functions, runners, nodes, tasks, settings, workers, relationships, chains |
+| Audit and governance | `audit_log`, `audit_records`, `governance_events`, archive manifests |
+| Identity and RBAC | providers, principals, identities, groups, memberships, role grants, runner grants |
+| LLM ledger | conversations, model-visible messages, inference requests/responses, routing, metrics, tool calls, policy/security events |
+| Apollo knowledge | PostgreSQL `pgvector` knowledge entries, relations, expertise, access logs |
+| Local state | on-node SQLite cognitive state, independent of the shared database |
+
+The schema is portable by default across SQLite, MySQL, and PostgreSQL. PostgreSQL-only behavior is isolated to features that need PostgreSQL, such as Apollo vector columns.
+
 ## Supported Databases
 
 | Database | Adapter | Gem | Default |
@@ -131,6 +148,32 @@ Legion::Data::Connection.connection_info
 # Shut down both connections
 Legion::Data.shutdown
 ```
+
+### Model Associations
+
+Models use Sequel associations as the public object graph. Prefer association methods and association datasets over hand-written foreign-key lookups when the relationship is part of the schema contract.
+
+```ruby
+task = Legion::Data::Model::Task.first(id: 42)
+task.function             # many_to_one :function
+task.relationship         # many_to_one :relationship
+task.task_logs_dataset    # further filter/order without losing the relationship
+
+conversation = Legion::Data::Model::LLM::Conversation.first(uuid: conversation_uuid)
+conversation.messages_dataset.order(:seq).all
+conversation.security_incident_lineage
+```
+
+Association rules used in this repo follow Sequel's own association model:
+
+| Relationship | Use this Sequel association |
+|--------------|-----------------------------|
+| Current table has the foreign key | `many_to_one` |
+| Associated table has the foreign key | `one_to_many` or `one_to_one` |
+| Join table connects both sides | `many_to_many` |
+| One associated record through a join table | `one_through_one` |
+
+When Sequel cannot infer names from the schema, models must be explicit with `:class`, `:key`, `:primary_key`, `:join_table`, `:left_key`, and `:right_key`. Association names must not collide with real column names because Sequel creates methods with the association name.
 
 ### Local Database (Agentic Cognitive State)
 
@@ -392,6 +435,18 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 
 The `Legion::Data::Model::Identity::*`, `Apollo::*`, `RBAC::*`, and `LLM::*` namespaces provide cleaner Sequel model names for API-facing code while preserving the legacy flat model classes.
 
+### Identity Namespace Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `Identity::Provider` | `portable_identity_providers` | Portable provider records with integer primary keys and public UUIDs |
+| `Identity::ProviderCapability` | `portable_identity_provider_capabilities` | Normalized provider capability declarations |
+| `Identity::Principal` | `portable_identity_principals` | Human, service, worker, or system principals |
+| `Identity::Identity` | `portable_identities` | Provider-bound identities for principals |
+| `Identity::Group` | `portable_identity_groups` | Identity groups |
+| `Identity::GroupMembership` | `portable_identity_group_memberships` | Principal and identity group membership rows |
+| `Identity::AuditLog` | `portable_identity_audit_log` | Identity lifecycle and lookup audit events |
+
 ### LLM Lifecycle Models
 
 | Model | Table | Description |
@@ -454,6 +509,15 @@ Run migrations standalone:
 ```bash
 bundle exec legionio_migrate
 ```
+
+Migration rules:
+
+- Do not edit published migrations.
+- Do not guard migrations with `create_table?`, `table_exists?`, `if_not_exists`, or similar conditional schema logic.
+- Add new migrations in the next available number and keep domains split by dependency and rollback risk.
+- Use portable Sequel DSL unless a feature truly requires adapter-specific behavior.
+- Prefer integer `id` primary keys for joins plus public `uuid` columns for APIs, logs, and external references.
+- Avoid JSON columns unless the shape is genuinely provider-specific or dynamic evidence.
 
 ---
 
