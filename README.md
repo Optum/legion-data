@@ -1,8 +1,8 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (71 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (93 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.6.25 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+**Version**: 1.7.1 | **Ruby**: >= 3.4 | **License**: Apache-2.0
 
 ---
 
@@ -54,7 +54,7 @@ Legion::Data (singleton module)
 │   ├── .stats          # Pool metrics, tuning snapshot, adapter-specific DB stats
 │   └── .shutdown       # Disconnect and close query file logger
 │
-├── Migration           # Auto-migration system (71 numbered Sequel DSL migrations)
+├── Migration           # Auto-migration system (93 numbered Sequel DSL migrations)
 │
 ├── Model               # Sequel model autoloader
 │   └── Models: Extension, Function, Runner, Node, Task, TaskLog, Setting,
@@ -62,7 +62,12 @@ Legion::Data (singleton module)
 │               RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant,
 │               IdentityProvider, Principal, Identity, IdentityGroup,
 │               IdentityGroupMembership,
-│               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only)
+│               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only),
+│               LLM::Conversation, LLM::Message, LLM::MessageInferenceRequest,
+│               LLM::MessageInferenceResponse, LLM::RouteAttempt,
+│               LLM::MessageInferenceMetric, LLM::ToolCall, LLM::ToolCallAttempt,
+│               LLM::ConversationCompaction, LLM::PolicyEvaluation,
+│               LLM::SecurityEvent, LLM::RegistryEvent
 │
 ├── Local               # Parallel local SQLite for agentic cognitive state
 │   ├── .setup          # Lazy init — creates legionio_local.db on first access
@@ -358,6 +363,25 @@ Legion::Data.reload_static_cache
 
 Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
 
+The `Legion::Data::Model::Identity::*`, `Apollo::*`, `RBAC::*`, and `LLM::*` namespaces provide cleaner Sequel model names for API-facing code while preserving the legacy flat model classes.
+
+### LLM Lifecycle Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `LLM::Conversation` | `llm_conversations` | Conversation container tied to the base user identity |
+| `LLM::Message` | `llm_messages` | Model-visible conversation transcript messages |
+| `LLM::MessageInferenceRequest` | `llm_message_inference_requests` | Provider request assembled from message, context, tools, policy, and routing inputs |
+| `LLM::MessageInferenceResponse` | `llm_message_inference_responses` | Provider/runtime response for one inference request |
+| `LLM::RouteAttempt` | `llm_route_attempts` | Provider/model/runner routing attempts, including failures and escalations |
+| `LLM::MessageInferenceMetric` | `llm_message_inference_metrics` | Token, latency, cost, and finance usage metrics for an inference pair |
+| `LLM::ToolCall` | `llm_tool_calls` | Tool calls requested by an LLM provider response |
+| `LLM::ToolCallAttempt` | `llm_tool_call_attempts` | Execution attempts, retries, failures, and results for provider-requested tool calls |
+| `LLM::ConversationCompaction` | `llm_conversation_compactions` | Conversation-scoped compaction events |
+| `LLM::PolicyEvaluation` | `llm_policy_evaluations` | Policy, classification, RBAC, and enforcement decisions for inference requests |
+| `LLM::SecurityEvent` | `llm_security_events` | Security-relevant events tied to conversation, inference, response, or tool attempts |
+| `LLM::RegistryEvent` | `llm_registry_events` | Provider/model registry availability and health events |
+
 ---
 
 ## Dependencies
@@ -377,7 +401,7 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 
 ## Migrations
 
-71 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+93 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
 
 | Range | What was added |
 |-------|---------------|
@@ -393,6 +417,8 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 | 050 | Critical indexes across 13 tables |
 | 058–067 | Audit records, chains, knowledge tiers, tool embedding cache, identity system (providers, principals, identities, groups) |
 | 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
+| 074–087 | Portable LLM lifecycle schema: conversations, messages, inference requests/responses, route attempts, inference metrics, provider-requested tool calls, compactions, policy/security, and registry events |
+| 088–093 | Portable identity companion schema with integer primary keys, public UUIDs, provider capabilities, principals, identities, groups, memberships, and audit log |
 
 Run migrations standalone:
 
@@ -429,6 +455,7 @@ bundle exec legionio_migrate
 11. Financial logging for UAIS cost recovery
 12. Global tool embedding cache (L4 tier for `Legion::Tools::EmbeddingCache`)
 13. Unified identity system (providers, principals, identities, groups)
+14. LLM lifecycle ledger for audit, finance metrics, routing reconstruction, tool calls, and security incident lineage
 
 ---
 

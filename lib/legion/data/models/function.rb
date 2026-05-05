@@ -11,6 +11,7 @@ module Legion
         many_to_one :runner
         one_to_many :trigger_relationships, class: 'Legion::Data::Model::Relationship', key: :trigger_id
         one_to_many :action_relationships, class: 'Legion::Data::Model::Relationship', key: :action_id
+        one_to_many :tasks
 
         def embedding_vector
           return nil unless embedding

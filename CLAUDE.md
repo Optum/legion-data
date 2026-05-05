@@ -3,7 +3,7 @@ Always run a full `bundle exec rspec` and `bundle exec rubocop -A` and fix all e
 # legion-data: Persistent Storage for LegionIO
 
 **Repository Level 3 Documentation**
-- **Parent**: `/Users/miverso2/rubymine/legion/CLAUDE.md`
+- **Parent**: workspace root `CLAUDE.md`
 
 ## Purpose
 

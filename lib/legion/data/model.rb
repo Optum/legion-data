@@ -14,7 +14,17 @@ module Legion
           %w[extension function relationship chain task runner node setting digital_worker
              apollo_entry apollo_relation apollo_expertise apollo_access_log audit_log
              audit_record identity_provider principal identity identity_group
-             identity_group_membership identity_audit_log]
+             identity_group_membership identity_audit_log
+             identity/identity identity/principal identity/providers identity/group
+             identity/group_memberships identity/audit_log
+             apollo/entries apollo/relation apollo/access_log apollo/expertise
+             apollo/operation
+             rbac/role_assignments rbac/runner_grants rbac/cross_team_grants
+             llm/conversation llm/message llm/message_inference_request
+             llm/message_inference_response llm/route_attempt
+             llm/message_inference_metric llm/tool_call llm/tool_call_attempt
+             llm/conversation_compaction llm/policy_evaluation
+             llm/security_event llm/registry_event]
         end
 
         def load

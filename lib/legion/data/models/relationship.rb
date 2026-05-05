@@ -6,6 +6,7 @@ module Legion
       class Relationship < Sequel::Model
         many_to_one :trigger, class: 'Legion::Data::Model::Function'
         many_to_one :action, class: 'Legion::Data::Model::Function'
+        many_to_one :chain
         one_to_many :tasks
       end
     end

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-05-04
+
+### Added
+- Migrations 074-087: portable LLM lifecycle schema covering conversations, messages, message inference requests/responses, route attempts, inference metrics, provider-requested tool calls, tool call attempts, conversation compactions, policy evaluations, security events, and registry events.
+- Migrations 088-093: portable identity companion schema with integer primary keys, public UUIDs, normalized provider capabilities, principals, identities, groups, memberships, and audit events.
+- Sequel models and associations for the new `Legion::Data::Model::LLM` lifecycle tables.
+- Nested Sequel model namespaces for Identity, Apollo, and RBAC tables.
+- Lookup helpers for nested and legacy identity models.
+- LLM reconstruction query helpers for audit lineage, finance rollups, security incident lineage, and message-to-tool incident flow.
+- Additional Sequel associations for core execution and identity models, including function/task, relationship/chain, task/worker, task log aliases, and principal/group many-to-many membership helpers.
+
 ## [1.7.0] - 2026-04-24
 
 ### Added
