@@ -4,7 +4,7 @@ require 'securerandom'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         module ModelHelpers
           def before_create

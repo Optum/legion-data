@@ -7,16 +7,16 @@ Legion::Data::Migration.migrate(Legion::Data::Connection.sequel, File.expand_pat
 Legion::Data::Models.load
 
 RSpec.describe 'LLM reconstruction query helpers' do
-  let(:conversation_model) { Legion::Data::Model::LLM::Conversation }
-  let(:message_model) { Legion::Data::Model::LLM::Message }
-  let(:request_model) { Legion::Data::Model::LLM::MessageInferenceRequest }
-  let(:response_model) { Legion::Data::Model::LLM::MessageInferenceResponse }
-  let(:route_attempt_model) { Legion::Data::Model::LLM::RouteAttempt }
-  let(:metric_model) { Legion::Data::Model::LLM::MessageInferenceMetric }
-  let(:tool_call_model) { Legion::Data::Model::LLM::ToolCall }
-  let(:tool_call_attempt_model) { Legion::Data::Model::LLM::ToolCallAttempt }
-  let(:policy_evaluation_model) { Legion::Data::Model::LLM::PolicyEvaluation }
-  let(:security_event_model) { Legion::Data::Model::LLM::SecurityEvent }
+  let(:conversation_model) { Legion::Data::Models::LLM::Conversation }
+  let(:message_model) { Legion::Data::Models::LLM::Message }
+  let(:request_model) { Legion::Data::Models::LLM::MessageInferenceRequest }
+  let(:response_model) { Legion::Data::Models::LLM::MessageInferenceResponse }
+  let(:route_attempt_model) { Legion::Data::Models::LLM::RouteAttempt }
+  let(:metric_model) { Legion::Data::Models::LLM::MessageInferenceMetric }
+  let(:tool_call_model) { Legion::Data::Models::LLM::ToolCall }
+  let(:tool_call_attempt_model) { Legion::Data::Models::LLM::ToolCallAttempt }
+  let(:policy_evaluation_model) { Legion::Data::Models::LLM::PolicyEvaluation }
+  let(:security_event_model) { Legion::Data::Models::LLM::SecurityEvent }
 
   before do
     clear_llm_tables

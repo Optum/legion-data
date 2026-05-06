@@ -4,31 +4,31 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class Message < Sequel::Model(:llm_messages)
           include ModelHelpers
 
           many_to_one :conversation
-          many_to_one :parent_message, class: 'Legion::Data::Model::LLM::Message', key: :parent_message_id
+          many_to_one :parent_message, class: 'Legion::Data::Models::LLM::Message', key: :parent_message_id
           many_to_one :message_inference_request
           many_to_one :message_inference_response
           many_to_one :tool_call
 
-          one_to_many :child_messages, class: 'Legion::Data::Model::LLM::Message', key: :parent_message_id
+          one_to_many :child_messages, class: 'Legion::Data::Models::LLM::Message', key: :parent_message_id
           one_to_many :triggered_message_inference_requests,
-                      class: 'Legion::Data::Model::LLM::MessageInferenceRequest',
+                      class: 'Legion::Data::Models::LLM::MessageInferenceRequest',
                       key:   :latest_message_id
           one_to_many :message_inference_responses,
-                      class: 'Legion::Data::Model::LLM::MessageInferenceResponse',
+                      class: 'Legion::Data::Models::LLM::MessageInferenceResponse',
                       key:   :response_message_id
-          one_to_many :requested_tool_calls, class: 'Legion::Data::Model::LLM::ToolCall',
+          one_to_many :requested_tool_calls, class: 'Legion::Data::Models::LLM::ToolCall',
                                              key:   :requested_by_message_id
-          one_to_many :result_tool_calls, class: 'Legion::Data::Model::LLM::ToolCall',
+          one_to_many :result_tool_calls, class: 'Legion::Data::Models::LLM::ToolCall',
                                           key:   :result_message_id
-          one_to_many :compactions_from, class: 'Legion::Data::Model::LLM::ConversationCompaction',
+          one_to_many :compactions_from, class: 'Legion::Data::Models::LLM::ConversationCompaction',
                                          key:   :replaces_message_from_id
-          one_to_many :compactions_to, class: 'Legion::Data::Model::LLM::ConversationCompaction',
+          one_to_many :compactions_to, class: 'Legion::Data::Models::LLM::ConversationCompaction',
                                        key:   :replaces_message_to_id
 
           class << self

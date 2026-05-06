@@ -4,13 +4,13 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class MessageInferenceRequest < Sequel::Model(:llm_message_inference_requests)
           include ModelHelpers
 
           many_to_one :conversation
-          many_to_one :latest_message, class: 'Legion::Data::Model::LLM::Message', key: :latest_message_id
+          many_to_one :latest_message, class: 'Legion::Data::Models::LLM::Message', key: :latest_message_id
           one_to_many :message_inference_responses
           one_to_many :route_attempts
           one_to_many :message_inference_metrics

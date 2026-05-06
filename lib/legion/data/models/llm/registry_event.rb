@@ -4,7 +4,7 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class RegistryEvent < Sequel::Model(:llm_registry_events)
           include ModelHelpers

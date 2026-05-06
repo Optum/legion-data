@@ -1,8 +1,8 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (96 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (97 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.7.5 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+**Version**: 1.8.0 | **Ruby**: >= 3.4 | **License**: Apache-2.0
 
 ---
 
@@ -73,7 +73,7 @@ Legion::Data (singleton module)
 │   ├── .stats          # Pool metrics, tuning snapshot, adapter-specific DB stats
 │   └── .shutdown       # Disconnect and close query file logger
 │
-├── Migration           # Auto-migration system (96 numbered Sequel DSL migrations)
+├── Migration           # Auto-migration system (97 numbered Sequel DSL migrations)
 │
 ├── Model               # Sequel model autoloader
 │   └── Models: Extension, Function, Runner, Node, Task, TaskLog, Setting,
@@ -159,10 +159,12 @@ task.function             # many_to_one :function
 task.relationship         # many_to_one :relationship
 task.task_logs_dataset    # further filter/order without losing the relationship
 
-conversation = Legion::Data::Model::LLM::Conversation.first(uuid: conversation_uuid)
+conversation = Legion::Data::Models::LLM::Conversation.first(uuid: conversation_uuid)
 conversation.messages_dataset.order(:seq).all
 conversation.security_incident_lineage
 ```
+
+Official LLM lifecycle data lives under `Legion::Data::Models::LLM`. `legion-llm` and `lex-llm-ledger` should use these models and the `llm_*` migration tables for conversations, model-visible messages, inference requests, responses, route attempts, metrics, tool calls, policy decisions, security events, and registry events. Legacy ledger-only tables are not the canonical schema.
 
 Association rules used in this repo follow Sequel's own association model:
 
@@ -433,7 +435,7 @@ Legion::Data.reload_static_cache
 
 Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
 
-The `Legion::Data::Model::Identity::*`, `Apollo::*`, `RBAC::*`, and `LLM::*` namespaces provide cleaner Sequel model names for API-facing code while preserving the legacy flat model classes.
+The `Legion::Data::Model::Identity::*`, `Apollo::*`, and `RBAC::*` namespaces provide cleaner Sequel model names for API-facing code while preserving the legacy flat model classes. Official LLM lifecycle models live under `Legion::Data::Models::LLM`.
 
 ### Identity Namespace Models
 
@@ -483,7 +485,7 @@ The `Legion::Data::Model::Identity::*`, `Apollo::*`, `RBAC::*`, and `LLM::*` nam
 
 ## Migrations
 
-96 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+97 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
 
 | Range | What was added |
 |-------|---------------|
@@ -503,6 +505,7 @@ The `Legion::Data::Model::Identity::*`, `Apollo::*`, `RBAC::*`, and `LLM::*` nam
 | 074–076 | Apollo field width fixes, task idempotency columns, and Extract step timing rows |
 | 077–090 | Portable LLM lifecycle schema: conversations, messages, inference requests/responses, route attempts, inference metrics, provider-requested tool calls, compactions, policy/security, and registry events |
 | 091–096 | Portable identity companion schema with integer primary keys, public UUIDs, provider capabilities, principals, identities, groups, memberships, and audit log |
+| 097 | LLM dispatch identifiers for fleet operation, correlation, idempotency, provider instance, and dispatch path |
 
 Run migrations standalone:
 

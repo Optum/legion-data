@@ -2,12 +2,20 @@
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-05-06
+
+### Added
+- Migration 097 adds official LLM dispatch fields for fleet operation, correlation, idempotency, provider instance, and dispatch path tracking.
+
+### Changed
+- LLM lifecycle Sequel models now live under `Legion::Data::Models::LLM` to match the official data model namespace.
+
 ## [1.7.5] - 2026-05-05
 
 ### Added
 - Migrations 077-090: portable LLM lifecycle schema covering conversations, messages, message inference requests/responses, route attempts, inference metrics, provider-requested tool calls, tool call attempts, conversation compactions, policy evaluations, security events, and registry events.
 - Migrations 091-096: portable identity companion schema with integer primary keys, public UUIDs, normalized provider capabilities, principals, identities, groups, memberships, and audit events.
-- Sequel models and associations for the new `Legion::Data::Model::LLM` lifecycle tables.
+- Sequel models and associations for the new `Legion::Data::Models::LLM` lifecycle tables.
 - Nested Sequel model namespaces for Identity, Apollo, and RBAC tables.
 - Lookup helpers for nested and legacy identity models.
 - LLM reconstruction query helpers for audit lineage, finance rollups, security incident lineage, and message-to-tool incident flow.

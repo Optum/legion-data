@@ -4,7 +4,7 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class RouteAttempt < Sequel::Model(:llm_route_attempts)
           include ModelHelpers

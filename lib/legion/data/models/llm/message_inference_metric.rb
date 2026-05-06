@@ -4,7 +4,7 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class MessageInferenceMetric < Sequel::Model(:llm_message_inference_metrics)
           include ModelHelpers

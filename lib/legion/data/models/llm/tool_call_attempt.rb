@@ -4,7 +4,7 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class ToolCallAttempt < Sequel::Model(:llm_tool_call_attempts)
           include ModelHelpers

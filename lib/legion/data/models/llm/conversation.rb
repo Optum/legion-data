@@ -4,7 +4,7 @@ require_relative 'model_helpers'
 
 module Legion
   module Data
-    module Model
+    module Models
       module LLM
         class Conversation < Sequel::Model(:llm_conversations)
           include ModelHelpers
