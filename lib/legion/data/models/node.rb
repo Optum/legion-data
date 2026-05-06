@@ -8,7 +8,8 @@ module Legion
       class Node < Sequel::Model
         include Legion::Logging::Helper
 
-        # one_to_many :task_log
+        one_to_many :task_log
+        one_to_many :task_logs, class: 'Legion::Data::Model::TaskLog'
         many_to_one :principal, class: 'Legion::Data::Model::Principal'
 
         def parsed_metrics

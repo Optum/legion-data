@@ -1,10 +1,27 @@
 # legion-data
 
-Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (76 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
+Persistent database storage for the [LegionIO](https://github.com/LegionIO/LegionIO) async job engine and AI coding assistant platform. Provides database connectivity via the [Sequel ORM](https://sequel.jeremyevans.net/), automatic schema migrations (97 numbered migrations), Sequel models for the full LegionIO control plane, and a parallel local SQLite database for on-node agentic cognitive state.
 
-**Version**: 1.7.4 | **Ruby**: >= 3.4 | **License**: Apache-2.0
+**Version**: 1.8.0 | **Ruby**: >= 3.4 | **License**: Apache-2.0
 
 ---
+
+## What It Owns
+
+`legion-data` is the data contract for LegionIO. It owns database connectivity, migrations, model loading, and portable Sequel model definitions for shared platform state. HTTP routes, runtime orchestration, and extension behavior live in other LegionIO repos and call into these models.
+
+Core responsibilities:
+
+| Area | Tables and models |
+|------|-------------------|
+| Control plane | extensions, functions, runners, nodes, tasks, settings, workers, relationships, chains |
+| Audit and governance | `audit_log`, `audit_records`, `governance_events`, archive manifests |
+| Identity and RBAC | providers, principals, identities, groups, memberships, role grants, runner grants |
+| LLM ledger | conversations, model-visible messages, inference requests/responses, routing, metrics, tool calls, policy/security events |
+| Apollo knowledge | PostgreSQL `pgvector` knowledge entries, relations, expertise, access logs |
+| Local state | on-node SQLite cognitive state, independent of the shared database |
+
+The schema is portable by default across SQLite, MySQL, and PostgreSQL. PostgreSQL-only behavior is isolated to features that need PostgreSQL, such as Apollo vector columns.
 
 ## Supported Databases
 
@@ -56,15 +73,20 @@ Legion::Data (singleton module)
 │   ├── .stats          # Pool metrics, tuning snapshot, adapter-specific DB stats
 │   └── .shutdown       # Disconnect and close query file logger
 │
-├── Migration           # Auto-migration system (76 numbered Sequel DSL migrations)
+├── Migration           # Auto-migration system (97 numbered Sequel DSL migrations)
 │
 ├── Model               # Sequel model autoloader
 │   └── Models: Extension, Function, Runner, Node, Task, TaskLog, Setting,
 │               DigitalWorker, Relationship, AuditLog, AuditRecord, Chain,
 │               RbacRoleAssignment, RbacRunnerGrant, RbacCrossTeamGrant,
 │               IdentityProvider, Principal, Identity, IdentityGroup,
-│               IdentityGroupMembership, IdentityAuditLog,
-│               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only)
+│               IdentityGroupMembership, IdentityAuditLog, ExtractStepTiming,
+│               ApolloEntry, ApolloRelation, ApolloExpertise, ApolloAccessLog (PG only),
+│               LLM::Conversation, LLM::Message, LLM::MessageInferenceRequest,
+│               LLM::MessageInferenceResponse, LLM::RouteAttempt,
+│               LLM::MessageInferenceMetric, LLM::ToolCall, LLM::ToolCallAttempt,
+│               LLM::ConversationCompaction, LLM::PolicyEvaluation,
+│               LLM::SecurityEvent, LLM::RegistryEvent
 │
 ├── Local               # Parallel local SQLite for agentic cognitive state
 │   ├── .setup          # Lazy init — creates legionio_local.db on first access
@@ -126,6 +148,34 @@ Legion::Data::Connection.connection_info
 # Shut down both connections
 Legion::Data.shutdown
 ```
+
+### Model Associations
+
+Models use Sequel associations as the public object graph. Prefer association methods and association datasets over hand-written foreign-key lookups when the relationship is part of the schema contract.
+
+```ruby
+task = Legion::Data::Model::Task.first(id: 42)
+task.function             # many_to_one :function
+task.relationship         # many_to_one :relationship
+task.task_logs_dataset    # further filter/order without losing the relationship
+
+conversation = Legion::Data::Models::LLM::Conversation.first(uuid: conversation_uuid)
+conversation.messages_dataset.order(:seq).all
+conversation.security_incident_lineage
+```
+
+Official LLM lifecycle data lives under `Legion::Data::Models::LLM`. `legion-llm` and `lex-llm-ledger` should use these models and the `llm_*` migration tables for conversations, model-visible messages, inference requests, responses, route attempts, metrics, tool calls, policy decisions, security events, and registry events. Legacy ledger-only tables are not the canonical schema.
+
+Association rules used in this repo follow Sequel's own association model:
+
+| Relationship | Use this Sequel association |
+|--------------|-----------------------------|
+| Current table has the foreign key | `many_to_one` |
+| Associated table has the foreign key | `one_to_many` or `one_to_one` |
+| Join table connects both sides | `many_to_many` |
+| One associated record through a join table | `one_through_one` |
+
+When Sequel cannot infer names from the schema, models must be explicit with `:class`, `:key`, `:primary_key`, `:join_table`, `:left_key`, and `:right_key`. Association names must not collide with real column names because Sequel creates methods with the association name.
 
 ### Local Database (Agentic Cognitive State)
 
@@ -385,6 +435,37 @@ Legion::Data.reload_static_cache
 
 Apollo models require PostgreSQL with the `pgvector` extension. They are skipped silently on SQLite and MySQL.
 
+The `Legion::Data::Model::Identity::*`, `Apollo::*`, and `RBAC::*` namespaces provide cleaner Sequel model names for API-facing code while preserving the legacy flat model classes. Official LLM lifecycle models live under `Legion::Data::Models::LLM`.
+
+### Identity Namespace Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `Identity::Provider` | `portable_identity_providers` | Portable provider records with integer primary keys and public UUIDs |
+| `Identity::ProviderCapability` | `portable_identity_provider_capabilities` | Normalized provider capability declarations |
+| `Identity::Principal` | `portable_identity_principals` | Human, service, worker, or system principals |
+| `Identity::Identity` | `portable_identities` | Provider-bound identities for principals |
+| `Identity::Group` | `portable_identity_groups` | Identity groups |
+| `Identity::GroupMembership` | `portable_identity_group_memberships` | Principal and identity group membership rows |
+| `Identity::AuditLog` | `portable_identity_audit_log` | Identity lifecycle and lookup audit events |
+
+### LLM Lifecycle Models
+
+| Model | Table | Description |
+|-------|-------|-------------|
+| `LLM::Conversation` | `llm_conversations` | Conversation container tied to the base user identity |
+| `LLM::Message` | `llm_messages` | Model-visible conversation transcript messages |
+| `LLM::MessageInferenceRequest` | `llm_message_inference_requests` | Provider request assembled from message, context, tools, policy, and routing inputs |
+| `LLM::MessageInferenceResponse` | `llm_message_inference_responses` | Provider/runtime response for one inference request |
+| `LLM::RouteAttempt` | `llm_route_attempts` | Provider/model/runner routing attempts, including failures and escalations |
+| `LLM::MessageInferenceMetric` | `llm_message_inference_metrics` | Token, latency, cost, and finance usage metrics for an inference pair |
+| `LLM::ToolCall` | `llm_tool_calls` | Tool calls requested by an LLM provider response |
+| `LLM::ToolCallAttempt` | `llm_tool_call_attempts` | Execution attempts, retries, failures, and results for provider-requested tool calls |
+| `LLM::ConversationCompaction` | `llm_conversation_compactions` | Conversation-scoped compaction events |
+| `LLM::PolicyEvaluation` | `llm_policy_evaluations` | Policy, classification, RBAC, and enforcement decisions for inference requests |
+| `LLM::SecurityEvent` | `llm_security_events` | Security-relevant events tied to conversation, inference, response, or tool attempts |
+| `LLM::RegistryEvent` | `llm_registry_events` | Provider/model registry availability and health events |
+
 ---
 
 ## Dependencies
@@ -404,7 +485,7 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 
 ## Migrations
 
-76 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
+97 numbered Sequel DSL migrations run automatically on startup (`auto_migrate: true`). Key milestones:
 
 | Range | What was added |
 |-------|---------------|
@@ -422,12 +503,24 @@ Apollo models require PostgreSQL with the `pgvector` extension. They are skipped
 | 068–071 | Entity type on audit records, principal on nodes, approval queue resume, engine on relationships |
 | 072–073 | Identity audit log and multi-instance identity columns |
 | 074–076 | Apollo field width fixes, task idempotency columns, and Extract step timing rows |
+| 077–090 | Portable LLM lifecycle schema: conversations, messages, inference requests/responses, route attempts, inference metrics, provider-requested tool calls, compactions, policy/security, and registry events |
+| 091–096 | Portable identity companion schema with integer primary keys, public UUIDs, provider capabilities, principals, identities, groups, memberships, and audit log |
+| 097 | LLM dispatch identifiers for fleet operation, correlation, idempotency, provider instance, and dispatch path |
 
 Run migrations standalone:
 
 ```bash
 bundle exec legionio_migrate
 ```
+
+Migration rules:
+
+- Do not edit published migrations.
+- Do not guard migrations with `create_table?`, `table_exists?`, `if_not_exists`, or similar conditional schema logic.
+- Add new migrations in the next available number and keep domains split by dependency and rollback risk.
+- Use portable Sequel DSL unless a feature truly requires adapter-specific behavior.
+- Prefer integer `id` primary keys for joins plus public `uuid` columns for APIs, logs, and external references.
+- Avoid JSON columns unless the shape is genuinely provider-specific or dynamic evidence.
 
 ---
 
@@ -458,6 +551,7 @@ bundle exec legionio_migrate
 11. Financial logging for UAIS cost recovery
 12. Global tool embedding cache (L4 tier for `Legion::Tools::EmbeddingCache`)
 13. Unified identity system (providers, principals, identities, groups)
+14. LLM lifecycle ledger for audit, finance metrics, routing reconstruction, tool calls, and security incident lineage
 
 ---
 
