@@ -66,7 +66,6 @@ module Legion
         load_models
       rescue StandardError => e
         handle_exception(e, level: :fatal, operation: :setup_global)
-        raise
       end
 
       def setup_cache
