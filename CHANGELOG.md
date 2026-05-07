@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-05-07
+
+### Fixed
+- `TypeError: superclass mismatch for class Identity` on startup: moved `require_relative 'identity/model_helpers'` inside the `Identity < Sequel::Model(:identities)` class body so the Sequel superclass is established before `model_helpers.rb` reopens the constant.
+
 ## [1.8.0] - 2026-05-06
 
 ### Added

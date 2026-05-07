@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'identity/model_helpers'
-
 return unless Legion::Data::Connection.adapter == :postgres
 
 module Legion
   module Data
     module Model
       class Identity < Sequel::Model(:identities)
+        require_relative 'identity/model_helpers'
         include ModelHelpers
 
         many_to_one :principal, class: 'Legion::Data::Model::Principal'
