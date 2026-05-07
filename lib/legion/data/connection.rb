@@ -365,7 +365,12 @@ module Legion
         end
 
         def sqlite_path
-          Legion::Settings[:data][:creds][:database] || 'legionio.db'
+          path = Legion::Settings[:data][:creds][:database] || 'legionio.db'
+          return path if File.absolute_path?(path)
+
+          base_dir = File.expand_path('~/.legionio/data')
+          FileUtils.mkdir_p(base_dir)
+          File.join(base_dir, path)
         end
 
         def connection_opts_for(adapter:, opts:)
