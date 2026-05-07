@@ -44,12 +44,36 @@ module Legion
 
       def setup
         log.info 'Legion::Data setup starting'
-        connection_setup
-        migrate
-        load_models
+        setup_global
         setup_cache
         setup_local
         log.info 'Legion::Data setup complete'
+      end
+
+      def setup_local
+        return if Legion::Settings[:data].dig(:local, :enabled) == false
+
+        Legion::Data::Local.setup
+        log.info "Legion::Data::Local connected to #{Legion::Data::Local.db_path}"
+      rescue StandardError => e
+        handle_exception(e, level: :fatal, operation: :setup_local)
+        raise
+      end
+
+      def setup_global
+        connection_setup
+        migrate
+        load_models
+      rescue StandardError => e
+        handle_exception(e, level: :fatal, operation: :setup_global)
+      end
+
+      def setup_cache
+        cache_settings = Legion::Settings[:data][:cache]
+        setup_static_cache if cache_settings[:static_cache]
+        setup_external_cache if cache_settings[:auto_enable] && defined?(::Legion::Cache)
+      rescue StandardError => e
+        handle_exception(e, level: :error, operation: :setup_cache)
       end
 
       def connection_setup
@@ -133,12 +157,6 @@ module Legion
         @read_privileges = nil
       end
 
-      def setup_cache
-        cache_settings = Legion::Settings[:data][:cache]
-        setup_static_cache if cache_settings[:static_cache]
-        setup_external_cache if cache_settings[:auto_enable] && defined?(::Legion::Cache)
-      end
-
       def setup_static_cache
         [Model::Extension, Model::Runner, Model::Function].each do |model|
           model.plugin :static_cache
@@ -194,14 +212,6 @@ module Legion
         end
 
         false
-      end
-
-      def setup_local
-        return if Legion::Settings[:data].dig(:local, :enabled) == false
-
-        Legion::Data::Local.setup
-      rescue StandardError => e
-        handle_exception(e, level: :warn, operation: :setup_local)
       end
     end
   end

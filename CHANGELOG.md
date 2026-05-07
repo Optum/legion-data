@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-05-07
+
+### Changed
+- Refactored `Legion::Data.setup` to call `setup_global`, `setup_cache`, then `setup_local` in explicit order — eliminates the `ensure setup_local` footgun that ran local SQLite even when global setup failed.
+- Extracted `setup_global` (connection + migrate + load_models) and promoted `setup_local` and `setup_cache` to top-level public methods with their own `rescue` blocks (`fatal` for local/global, `error` for cache).
+- SQLite main database now resolves to `~/.legionio/data/legionio.db` instead of a relative path in the process working directory; existing absolute path overrides in settings are unchanged.
+
 ## [1.8.1] - 2026-05-07
 
 ### Fixed
