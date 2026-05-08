@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.8.4] - 2026-05-08
+
+### Removed
+- Dropped legacy postgres-only identity tables (`principals`, `identity_providers`, `identities`, `identity_groups`, `identity_group_memberships`, `identity_audit_log`) via migration 098.
+- Removed `table_available?` guards from all identity model files — models load unconditionally.
+
+### Changed
+- Renamed `portable_identity_*` tables to canonical names (`identity_principals`, `identity_providers`, `identities`, `identity_groups`, `identity_group_memberships`, `identity_audit_log`, `identity_provider_capabilities`) via migration 099.
+- Updated all identity models to reference the new table names.
+
 ## [1.8.3] - 2026-05-07
 
 ### Removed

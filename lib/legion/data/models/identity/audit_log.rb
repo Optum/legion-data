@@ -2,13 +2,11 @@
 
 require_relative 'model_helpers'
 
-return unless Legion::Data::Model::Identity::ModelHelpers.table_available?(:portable_identity_audit_log)
-
 module Legion
   module Data
     module Model
       class Identity
-        class AuditLog < Sequel::Model(:portable_identity_audit_log)
+        class AuditLog < Sequel::Model(:identity_audit_log)
           include ModelHelpers
 
           many_to_one :principal, class: 'Legion::Data::Model::Identity::Principal'
