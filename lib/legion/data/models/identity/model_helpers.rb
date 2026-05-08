@@ -11,12 +11,6 @@ module Legion
             model.extend(ClassMethods)
           end
 
-          def self.table_available?(table_name)
-            Legion::Data::Connection.sequel&.table_exists?(table_name)
-          rescue StandardError
-            false
-          end
-
           module ClassMethods
             def lookup(value)
               lookup_by_columns(value, lookup_columns)

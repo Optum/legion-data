@@ -2,20 +2,18 @@
 
 require_relative 'model_helpers'
 
-return unless Legion::Data::Model::Identity::ModelHelpers.table_available?(:portable_identity_principals)
-
 module Legion
   module Data
     module Model
       class Identity
-        class Principal < Sequel::Model(:portable_identity_principals)
+        class Principal < Sequel::Model(:identity_principals)
           include ModelHelpers
 
           one_to_many :identities, class: 'Legion::Data::Model::Identity::Identity'
           one_to_many :group_memberships, class: 'Legion::Data::Model::Identity::GroupMembership'
           many_to_many :groups,
                        class:      'Legion::Data::Model::Identity::Group',
-                       join_table: :portable_identity_group_memberships,
+                       join_table: :identity_group_memberships,
                        left_key:   :principal_id,
                        right_key:  :group_id
 
