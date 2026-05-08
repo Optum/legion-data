@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-05-07
+
+### Removed
+- Legacy top-level identity model files (`identity.rb`, `principal.rb`, `identity_provider.rb`, `identity_group.rb`, `identity_group_membership.rb`, `identity_audit_log.rb`) — superseded by the portable `identity/` namespace models backed by `portable_*` tables.
+
+### Fixed
+- `TypeError: superclass mismatch for class Identity` on postgres startup caused by `model_helpers.rb` defining `class Identity` as a plain namespace before `identity.rb` tried to reopen it as `< Sequel::Model(:identities)`.
+
 ## [1.8.2] - 2026-05-07
 
 ### Changed
