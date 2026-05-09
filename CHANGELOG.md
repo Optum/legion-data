@@ -1,6 +1,9 @@
 # Legion::Data Changelog
 
-## [Unreleased]
+## [1.8.5] - 2026-05-09
+
+### Removed
+- Unnecessary `defined?(Legion::Logging)` guards from connection and local database setup — legion-logging is a hard gemspec dependency and always available
 
 ## [1.8.4] - 2026-05-08
 
