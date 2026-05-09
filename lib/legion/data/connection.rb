@@ -396,7 +396,7 @@ module Legion
             opts[:logger]              = @query_file_logger
             opts[:sql_log_level]       = :debug
             opts[:log_connection_info] = data[:log_connection_info] || false
-          elsif data[:log] && defined?(Legion::Logging)
+          elsif data[:log]
             # Standard mode: slow-query warnings through Legion::Logging domain
             opts[:logger]              = build_data_logger
             opts[:sql_log_level]       = data[:sql_log_level]&.to_sym || :debug

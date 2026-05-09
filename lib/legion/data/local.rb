@@ -38,7 +38,7 @@ module Legion
             @query_file_logger = Legion::Data::Connection::QueryFileLogger.new(log_path)
             opts[:logger]          = @query_file_logger
             opts[:sql_log_level]   = :debug
-          elsif data[:log] && defined?(Legion::Logging)
+          elsif data[:log]
             opts[:logger]          = build_local_logger
             opts[:sql_log_level]   = resolved_sql_log_level
             opts[:log_warn_duration] = resolved_log_warn_duration
