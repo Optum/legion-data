@@ -7,7 +7,7 @@ RSpec.describe 'Migration 101: apollo_entries identity and access_scope columns'
 
   before(:all) do
     migration_path = File.expand_path('../../../../lib/legion/data/migrations', __dir__)
-    Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 102)
+    Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 101)
   end
 
   context 'column additions' do
@@ -49,11 +49,13 @@ RSpec.describe 'Migration 101: apollo_entries identity and access_scope columns'
     end
 
     it 'existing rows default to global access_scope' do
-      db[:apollo_entries].insert(
-        content: 'test', content_type: 'observation', source_agent: 'test', status: 'candidate'
-      )
-      row = db[:apollo_entries].first
-      expect(row[:access_scope]).to eq('global')
+      db.transaction(rollback: :always) do
+        db[:apollo_entries].insert(
+          content: 'test', content_type: 'observation', source_agent: 'test', status: 'candidate'
+        )
+        row = db[:apollo_entries].first
+        expect(row[:access_scope]).to eq('global')
+      end
     end
   end
 end
