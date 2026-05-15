@@ -1,5 +1,11 @@
 # Legion::Data Changelog
 
+## [1.8.6] - 2026-05-15
+
+### Added
+- Migration 100: `access_scope VARCHAR(20) NOT NULL DEFAULT 'global'`, `identity_principal_id INTEGER`, `identity_id INTEGER`, `identity_canonical_name VARCHAR(255)` columns on `apollo_entries` and `apollo_entries_archive` (Postgres only). Existing rows default to `global` access scope.
+- Migration 101: indexes on `apollo_entries` — full index on `access_scope`, partial indexes on `identity_principal_id` and `identity_id` (WHERE NOT NULL).
+
 ## [1.8.5] - 2026-05-09
 
 ### Removed
