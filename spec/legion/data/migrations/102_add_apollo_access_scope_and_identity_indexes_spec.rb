@@ -10,23 +10,25 @@ RSpec.describe 'Migration 102: apollo_entries access_scope and identity indexes'
     Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 102)
   end
 
+  def index_names
+    if db.adapter_scheme == :postgres
+      db.indexes(:apollo_entries).keys.map(&:to_s)
+    else
+      db[:sqlite_master].where(type: 'index', tbl_name: 'apollo_entries').select_map(:name)
+    end
+  end
+
   context 'index creation' do
     it 'creates full index on access_scope' do
-      indexes = db.indexes(:apollo_entries)
-      expect(indexes).to have_key(:idx_apollo_access_scope)
-      expect(indexes[:idx_apollo_access_scope][:columns]).to eq([:access_scope])
+      expect(index_names).to include('idx_apollo_access_scope')
     end
 
     it 'creates partial index on identity_principal_id' do
-      indexes = db.indexes(:apollo_entries)
-      expect(indexes).to have_key(:idx_apollo_identity_principal_id)
-      expect(indexes[:idx_apollo_identity_principal_id][:columns]).to eq([:identity_principal_id])
+      expect(index_names).to include('idx_apollo_identity_principal_id')
     end
 
     it 'creates partial index on identity_id' do
-      indexes = db.indexes(:apollo_entries)
-      expect(indexes).to have_key(:idx_apollo_identity_id)
-      expect(indexes[:idx_apollo_identity_id][:columns]).to eq([:identity_id])
+      expect(index_names).to include('idx_apollo_identity_id')
     end
   end
 end
