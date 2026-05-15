@@ -21,3 +21,4 @@ legion.log
 # SQLite database files
 *.db
 .worktrees
+/docs/
