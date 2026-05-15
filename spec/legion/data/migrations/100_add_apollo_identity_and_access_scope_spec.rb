@@ -6,11 +6,17 @@ RSpec.describe 'Migration 100: apollo_entries identity and access_scope columns'
   let(:db) { Legion::Data::Connection.sequel }
 
   before(:all) do
+    skip 'postgres only' unless Legion::Data::Connection.adapter == :postgres
+
     migration_path = File.expand_path('../../../../lib/legion/data/migrations', __dir__)
     Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 100)
   end
 
-  context 'when postgres', if: Legion::Data::Connection.adapter == :postgres do
+  before do
+    skip 'postgres only' unless Legion::Data::Connection.adapter == :postgres
+  end
+
+  context 'when postgres' do
     it 'adds access_scope to apollo_entries with default global' do
       columns = db.schema(:apollo_entries).to_h
       expect(columns).to have_key(:access_scope)
