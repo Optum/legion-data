@@ -14,7 +14,7 @@ RSpec.describe 'Migration 101: apollo_entries identity and access_scope columns'
     it 'adds access_scope to apollo_entries with default global' do
       columns = db.schema(:apollo_entries).to_h
       expect(columns).to have_key(:access_scope)
-      expect(columns[:access_scope][:default]).to eq('global')
+      expect(columns[:access_scope][:default].delete("'")).to eq('global')
       expect(columns[:access_scope][:allow_null]).to be false
     end
 
