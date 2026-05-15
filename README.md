@@ -403,6 +403,39 @@ Legion::Data.reload_static_cache
 
 ---
 
+## Common Fields Standard
+
+All new tables follow a column convention. Required fields are present on every table. Optional fields are added when the domain warrants them.
+
+### Required
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | `INTEGER PRIMARY KEY` (auto-increment) | Internal join key. Never expose externally — use a `uuid` column for API/log references. |
+| `identity_principal_id` | `INTEGER` FK → `identity_principals.id` | The principal who caused this row to exist. |
+| `identity_id` | `INTEGER` FK → `identities.id` | The specific provider-bound identity credential. |
+| `identity_canonical_name` | `VARCHAR(255)` | Denormalized snapshot of the principal's canonical name. Point-in-time copy — may become stale if the principal is renamed. Use the FK join for authoritative lookups. Exists for fast filtering without joins. |
+| `created_at` | `TIMESTAMPTZ` | Row creation time. |
+| `updated_at` | `TIMESTAMPTZ` | Last modification time. |
+
+### Optional (add when applicable)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `expires_at` | `TIMESTAMPTZ` | TTL / archival eligibility. |
+| `content_type` | `VARCHAR(...)` | Classifier for the row's payload kind. |
+| `conversation_id` | `INTEGER` FK → `llm_conversations.id` | Links to the LLM conversation that produced this row. |
+| `contains_phi` | `BOOLEAN` | Row contains Protected Health Information. |
+| `contains_pii` | `BOOLEAN` | Row contains Personally Identifiable Information. |
+
+### Naming rules
+
+- Identity FKs are always `identity_principal_id` and `identity_id` — not `principal_id`, `agent_id`, `user_id`, or other loose variants on new tables.
+- The denormalized string column is always `identity_canonical_name` — not `canonical_name`, `actor`, `agent_id`, or `identity_name`.
+- **Existing columns on pre-existing tables are never renamed or removed.** Columns like `agent_id`, `source_agent`, `submitted_by`, and `actor` are historical record. The new identity columns are purely additive.
+
+---
+
 ## Data Models
 
 | Model | Table | Description |
@@ -441,13 +474,13 @@ The `Legion::Data::Model::Identity::*`, `Apollo::*`, and `RBAC::*` namespaces pr
 
 | Model | Table | Description |
 |-------|-------|-------------|
-| `Identity::Provider` | `portable_identity_providers` | Portable provider records with integer primary keys and public UUIDs |
-| `Identity::ProviderCapability` | `portable_identity_provider_capabilities` | Normalized provider capability declarations |
-| `Identity::Principal` | `portable_identity_principals` | Human, service, worker, or system principals |
-| `Identity::Identity` | `portable_identities` | Provider-bound identities for principals |
-| `Identity::Group` | `portable_identity_groups` | Identity groups |
-| `Identity::GroupMembership` | `portable_identity_group_memberships` | Principal and identity group membership rows |
-| `Identity::AuditLog` | `portable_identity_audit_log` | Identity lifecycle and lookup audit events |
+| `Identity::Provider` | `identity_providers` | Provider records with integer primary keys and public UUIDs |
+| `Identity::ProviderCapability` | `identity_provider_capabilities` | Normalized provider capability declarations |
+| `Identity::Principal` | `identity_principals` | Human, service, worker, or system principals |
+| `Identity::Identity` | `identities` | Provider-bound identities for principals |
+| `Identity::Group` | `identity_groups` | Identity groups |
+| `Identity::GroupMembership` | `identity_group_memberships` | Principal and identity group membership rows |
+| `Identity::AuditLog` | `identity_audit_log` | Identity lifecycle and lookup audit events |
 
 ### LLM Lifecycle Models
 
