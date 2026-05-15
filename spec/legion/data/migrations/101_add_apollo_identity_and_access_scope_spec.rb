@@ -7,7 +7,7 @@ RSpec.describe 'Migration 101: apollo_entries identity and access_scope columns'
 
   before(:all) do
     migration_path = File.expand_path('../../../../lib/legion/data/migrations', __dir__)
-    Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 101)
+    Sequel::Migrator.run(Legion::Data::Connection.sequel, migration_path, target: 102)
   end
 
   context 'column additions' do
