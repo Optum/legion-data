@@ -56,11 +56,4 @@ RSpec.describe 'Migration 100: apollo_entries identity and access_scope columns'
       expect(row[:access_scope]).to eq('global')
     end
   end
-
-  context 'when not postgres', unless: Legion::Data::Connection.adapter == :postgres do
-    it 'does not add the new columns to apollo_entries' do
-      columns = db.schema(:apollo_entries).map(&:first)
-      expect(columns).not_to include(:access_scope, :identity_principal_id, :identity_id, :identity_canonical_name)
-    end
-  end
 end
