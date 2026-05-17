@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.8.7] - 2026-05-17
+
+### Added
+- Migrations 103-114: adds standardized identity columns (`access_scope`, `identity_principal_id`, `identity_id`, `identity_canonical_name`) to all 12 LLM lifecycle tables. Tables that already carried identity columns under legacy names (`principal_id`/`identity_id` on `llm_conversations`, `caller_principal_id`/`caller_identity_id` on `llm_message_inference_requests`) receive only `access_scope` and `identity_canonical_name` — existing columns are not renamed. Each table is its own migration with full `access_scope` index and partial `identity_principal_id` index.
+
 ## [1.8.6] - 2026-05-15
 
 ### Added
