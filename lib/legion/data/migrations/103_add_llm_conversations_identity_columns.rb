@@ -9,15 +9,13 @@ Sequel.migration do
     alter_table(:llm_conversations) do
       add_column :access_scope, String, size: 20, null: false, default: 'global'
       add_column :identity_canonical_name, String, size: 255, null: true
+      add_index :access_scope, name: :idx_conversations_access_scope
     end
-
-    run 'CREATE INDEX IF NOT EXISTS idx_conversations_access_scope ON llm_conversations (access_scope)'
   end
 
   down do
-    run 'DROP INDEX IF EXISTS idx_conversations_access_scope'
-
     alter_table(:llm_conversations) do
+      drop_index :access_scope, name: :idx_conversations_access_scope
       drop_column :access_scope
       drop_column :identity_canonical_name
     end
