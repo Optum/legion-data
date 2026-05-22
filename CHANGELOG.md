@@ -1,5 +1,13 @@
 # Legion::Data Changelog
 
+## [1.8.8] - 2026-05-20
+
+### Added
+- `Legion::Data::Connection.reconnect_with_fresh_creds` — updates Sequel's internal connection opts with fresh credentials from `Legion::Settings[:data][:creds]` and reconnects the pool. Called by `LeaseManager#trigger_postgresql_reconnect` after Vault dynamic PostgreSQL lease rotation.
+
+### Fixed
+- Vault dynamic PostgreSQL credential rotation: after lease expiry, connections would fail with `PG::ConnectionBad: role "v-legionio-node-..." does not exist` because Sequel retained the original (revoked) credentials in `@opts`. The legacy fallback (`disconnect` + `test_connection`) was insufficient since it doesn't update stored credentials.
+
 ## [1.8.7] - 2026-05-17
 
 ### Added

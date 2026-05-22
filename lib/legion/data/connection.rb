@@ -267,6 +267,36 @@ module Legion
           log.info 'Legion::Data connection closed'
         end
 
+        def reconnect_with_fresh_creds
+          return false unless @sequel
+          return false if adapter == :sqlite
+
+          fresh_creds = Legion::Settings[:data][:creds]
+          return false unless fresh_creds.is_a?(Hash)
+
+          new_user = fresh_creds[:user] || fresh_creds[:username]
+          new_pass = fresh_creds[:password]
+
+          unless new_user && new_pass
+            log.error('reconnect_with_fresh_creds: no user/password in Settings[:data][:creds]')
+            return false
+          end
+
+          old_user = @sequel.opts[:user]
+          @sequel.opts[:user] = new_user
+          @sequel.opts[:password] = new_pass
+
+          @sequel.disconnect
+
+          @sequel.test_connection
+          log.info("reconnect_with_fresh_creds: rotated credentials (#{old_user} → #{new_user})")
+          true
+        rescue StandardError => e
+          handle_exception(e, level: :error, handled: true, operation: :reconnect_with_fresh_creds,
+                           old_user: old_user, new_user: new_user)
+          false
+        end
+
         def connect_with_replicas
           return unless adapter == :postgres
 
