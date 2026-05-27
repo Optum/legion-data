@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## [1.8.9] - 2026-05-26
+
+### Changed
+- Migration 116: make `llm_tool_calls.message_inference_response_id` nullable and drop composite unique index on `[message_inference_response_id, tool_call_index]`. Eliminates 30-40% dead-letter rate on tool audit messages caused by AMQP race between response and tool call writers.
+- Migration 117: add nullable `conversation_id` FK to `llm_tool_calls` referencing `llm_conversations`, so tool call rows can track their conversation even when the response row hasn't been written yet.
+- Add `many_to_one :conversation` association to `LLM::ToolCall` model.
+
 ## [1.8.8] - 2026-05-20
 
 ### Added
