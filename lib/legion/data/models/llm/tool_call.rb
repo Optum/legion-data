@@ -10,6 +10,7 @@ module Legion
           include ModelHelpers
 
           many_to_one :message_inference_response
+          many_to_one :conversation
           many_to_one :requested_by_message, class: 'Legion::Data::Models::LLM::Message', key: :requested_by_message_id
           many_to_one :result_message, class: 'Legion::Data::Models::LLM::Message', key: :result_message_id
           one_to_many :tool_call_attempts
