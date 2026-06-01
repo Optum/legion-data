@@ -1,31 +1,45 @@
 inherit_gem:
   rubocop-legion: config/core.yml
-
-Metrics/ParameterLists:
-  Max: 8
-
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+Layout/LineLength:
+  Max: 160
+Layout/SpaceAroundEqualsInParameterDefault:
+  EnforcedStyle: space
+Layout/HashAlignment:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+Metrics/MethodLength:
+  Max: 50
+Metrics/ClassLength:
+  Max: 1500
+Metrics/ModuleLength:
+  Max: 1500
 Metrics/BlockLength:
   Max: 40
   Exclude:
     - 'spec/**/*'
-    - 'lib/legion/data/migrations/**/*'
-
-Naming/VariableNumber:
-  Enabled: false
-
-Style/FileOpen:
+Metrics/AbcSize:
+  Max: 60
   Exclude:
-    - 'lib/legion/data/connection.rb'
+    - 'spec/**/*'
+Metrics/CyclomaticComplexity:
+  Max: 15
+  Exclude:
+    - 'spec/**/*'
+Metrics/PerceivedComplexity:
+  Max: 17
+  Exclude:
+    - 'spec/**/*'
 
-# Pre-existing patterns — suppress until addressed in a dedicated cleanup PR
-ThreadSafety/ClassInstanceVariable:
+Style/Documentation:
   Enabled: false
-
-ThreadSafety/ClassAndModuleAttributes:
-  Enabled: false
-
-Legion/RescueLogging/NoCapture:
-  Enabled: false
-
-Legion/Framework/EagerSequelModel:
+Style/SymbolArray:
+  Enabled: true
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+Naming/PredicateMethod:
   Enabled: false
