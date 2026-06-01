@@ -38,7 +38,7 @@ RSpec.describe 'Migrations' do
       llm_security_events llm_registry_events
       identity_providers identity_provider_capabilities identity_principals identities
       identity_groups identity_group_memberships identity_audit_log
-      rbac_roles rbac_role_assignments
+      rbac_role_assignments rbac_runner_grants rbac_cross_team_grants
       memory_traces memory_associations
       metering_records metering_hourly_rollup
       finlog_identities finlog_assets finlog_environments finlog_accounting finlog_executions
