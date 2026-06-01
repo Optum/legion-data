@@ -1,5 +1,12 @@
 # Legion::Data Changelog
 
+## [1.10.1] - 2026-06-01
+
+### Added
+
+- Migration 130: adds `pii_types_json` (TEXT), `jurisdictions_json` (TEXT), and `schema_version` (Integer, default 15) to `llm_conversations`. Required by lex-llm-ledger OfficialRecordWriter for compliance metadata.
+- Migration 131: adds `schema_version` (Integer, default 15) to `llm_tool_calls`. Required by lex-llm-ledger OfficialRecordWriter.
+
 ## [1.10.0] - 2026-06-01
 
 ### Added
