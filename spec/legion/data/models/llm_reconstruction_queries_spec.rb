@@ -18,22 +18,20 @@ RSpec.describe 'LLM reconstruction query helpers' do
   let(:policy_evaluation_model) { Legion::Data::Models::LLM::PolicyEvaluation }
   let(:security_event_model) { Legion::Data::Models::LLM::SecurityEvent }
 
-  before do
+  let(:unique_ref) { "req-#{SecureRandom.hex(6)}" }
+
+  before(:each) do
     clear_llm_tables
   end
 
-  after(:all) do
-    Legion::Data::Connection.shutdown
-  end
-
   it 'reconstructs audit lineage by request_ref and internal id' do
-    fixture = create_llm_lifecycle
+    fixture = create_llm_lifecycle(request_ref: unique_ref)
 
-    by_ref = request_model.audit_lineage_for('req-123')
+    by_ref = request_model.audit_lineage_for(unique_ref)
     by_id = request_model.audit_lineage_for(fixture[:request].id)
 
     expect(by_ref[:request]).to eq(fixture[:request])
-    expect(by_ref[:request_ref]).to eq('req-123')
+    expect(by_ref[:request_ref]).to eq(unique_ref)
     expect(by_ref[:conversation]).to eq(fixture[:conversation])
     expect(by_ref[:latest_message]).to eq(fixture[:user_message])
     expect(by_ref[:responses]).to contain_exactly(fixture[:response])
@@ -44,8 +42,8 @@ RSpec.describe 'LLM reconstruction query helpers' do
   end
 
   it 'aggregates finance usage by cost center, model, and recorded day from inference metrics' do
-    create_llm_lifecycle
-    second = create_llm_lifecycle(request_ref: 'req-456', cost_center: 'finance-ops', model_key: 'gpt-4.1',
+    create_llm_lifecycle(request_ref: unique_ref)
+    second = create_llm_lifecycle(request_ref: "#{unique_ref}-456", cost_center: 'finance-ops', model_key: 'gpt-4.1',
                                   recorded_at: Time.utc(2026, 5, 5, 3, 0, 0), cost_usd: 0.75)
     metric_model.create(
       message_inference_request_id:  second[:request].id,
@@ -79,7 +77,7 @@ RSpec.describe 'LLM reconstruction query helpers' do
   end
 
   it 'reconstructs security incident lineage for a conversation' do
-    fixture = create_llm_lifecycle
+    fixture = create_llm_lifecycle(request_ref: unique_ref)
 
     lineage = security_event_model.lineage_for_conversation(fixture[:conversation])
 
@@ -96,7 +94,7 @@ RSpec.describe 'LLM reconstruction query helpers' do
   end
 
   it 'reconstructs incident flow from message to request, response, tool calls, and attempts' do
-    fixture = create_llm_lifecycle
+    fixture = create_llm_lifecycle(request_ref: unique_ref)
 
     flow = fixture[:user_message].incident_flow
 
@@ -111,6 +109,8 @@ RSpec.describe 'LLM reconstruction query helpers' do
   end
 
   def clear_llm_tables
+    db = Legion::Data::Connection.sequel
+    db.run('PRAGMA foreign_keys = OFF') if Legion::Data::Connection.adapter == :sqlite
     %i[
       llm_security_events
       llm_policy_evaluations
@@ -122,7 +122,8 @@ RSpec.describe 'LLM reconstruction query helpers' do
       llm_message_inference_requests
       llm_messages
       llm_conversations
-    ].each { |table| Legion::Data::Connection.sequel[table].delete }
+    ].each { |table| db[table].delete }
+    db.run('PRAGMA foreign_keys = ON') if Legion::Data::Connection.adapter == :sqlite
   end
 
   def create_llm_lifecycle(request_ref: 'req-123', cost_center: 'finance-ops', model_key: 'gpt-4.1',

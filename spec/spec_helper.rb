@@ -19,6 +19,13 @@ Legion::Logging.setup(log_file: './legion.log', level: 'fatal')
 Legion::Settings.load
 require 'legion/data'
 
+Legion::Settings[:data][:dev_mode] = true
+Legion::Settings[:data][:creds] ||= {}
+Legion::Settings[:data][:creds][:database] = 'legion_test.db'
+
+db_path = File.expand_path('~/.legionio/data/legion_test.db')
+FileUtils.rm_f(db_path)
+
 Legion::Data.setup
 
 RSpec.configure do |config|

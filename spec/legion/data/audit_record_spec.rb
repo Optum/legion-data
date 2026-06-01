@@ -3,6 +3,11 @@
 require 'spec_helper'
 require 'legion/data/audit_record'
 
+Legion::Data::Connection.setup unless Legion::Data.connected?
+Legion::Data::Migration.migrate(Legion::Data::Connection.sequel,
+                                File.expand_path('../../../lib/legion/data/migrations', __dir__))
+require 'legion/data/models/audit_record'
+
 RSpec.describe Legion::Data::AuditRecord do
   let(:chain_id)     { "test-chain-#{SecureRandom.hex(4)}" }
   let(:content_type) { 'test.event' }

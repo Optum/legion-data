@@ -3,8 +3,8 @@
 Sequel.migration do
   change do
     alter_table(:llm_tool_calls) do
-      add_column :tool_arguments_json, Text, null: true
-      add_column :tool_result_json, Text, null: true
+      add_column :tool_arguments_json, :text, null: true
+      add_column :tool_result_json, :text, null: true
       add_column :tool_category, String, size: 64, null: true
       add_column :data_handling_classification, String, size: 32, null: true
       add_column :policy_decision, String, size: 32, null: true
