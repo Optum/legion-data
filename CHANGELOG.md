@@ -1,5 +1,15 @@
 # Legion::Data Changelog
 
+## [1.9.0] - 2026-06-01
+
+### Added
+
+- Migration 123: audit columns on `llm_tool_calls` — `tool_arguments_json` (TEXT), `tool_result_json` (TEXT), `tool_category` (String(64)), `data_handling_classification` (String(32)), `policy_decision` (String(32)), `requires_human_approval` (Boolean) plus indexes on `tool_category`, `data_handling_classification`, `policy_decision`.
+- Migration 124: audit columns on `llm_tool_call_attempts` — `attempt_input_json` (TEXT), `attempt_output_json` (TEXT), `error_details_json` (TEXT).
+- Migration 125: audit columns on `llm_escalation_events` — `history_json` (TEXT), `outcome` (String(32)), `total_attempts` (Integer) plus index on `outcome`.
+- Migration 126: audit columns on `llm_message_inference_responses` — `route_attempts` (Integer, default 0), `escalation_chain_ref` (String(128)) plus index on `escalation_chain_ref`. Skips `response_content_hash` (already exists since migration 080).
+- Migration 127: audit columns on `llm_message_inference_requests` — `parent_request_id` (Integer, self-referencing FK on_delete: :set_null). Skips `request_content_hash`, `curation_strategy`, `tool_policy` (all already exist since migration 079).
+
 ## [1.8.9] - 2026-05-26
 
 ### Changed

@@ -10,8 +10,13 @@ Sequel.migration do
 
   down do
     alter_table(:llm_tool_calls) do
-      drop_index :conversation_id
-      drop_foreign_key :conversation_id
+      drop_column :conversation_id
+      # On SQLite, drop_column triggers table recreation which silently destroys
+      # partial indexes. Recreate the one from migration 109.
+      add_index :identity_principal_id,
+                name:          :idx_tool_calls_identity_principal_id,
+                where:         Sequel.negate(identity_principal_id: nil),
+                if_not_exists: true
     end
   end
 end

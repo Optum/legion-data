@@ -7,7 +7,8 @@ module Legion
         module ModelHelpers
           def self.table_available?(table_name)
             Legion::Data::Connection.sequel&.table_exists?(table_name)
-          rescue StandardError
+          rescue StandardError => e
+            log.error("table availability check failed for #{table_name}: #{e.message}")
             false
           end
         end

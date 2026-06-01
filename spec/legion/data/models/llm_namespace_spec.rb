@@ -21,10 +21,6 @@ RSpec.describe 'LLM model namespace' do
     ].each { |table| Legion::Data::Connection.sequel[table].delete }
   end
 
-  after(:all) do
-    Legion::Data::Connection.shutdown
-  end
-
   it 'creates the conversation to request to response association graph from official constants' do
     conversation = conversation_model.create(principal_id: 101, identity_id: 202, title: 'fleet response')
     message = message_model.create(conversation_id: conversation.id, seq: 1, role: 'user', content: 'hello')
