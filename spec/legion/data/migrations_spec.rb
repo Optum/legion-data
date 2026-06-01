@@ -28,29 +28,37 @@ RSpec.describe 'Migrations' do
   end
 
   it 'has all expected tables' do
-    expected_tables = %i[
-      extensions runners functions tasks digital_workers nodes settings value_metrics
-      apollo_entries apollo_entries_archive apollo_relations apollo_expertise apollo_access_log
-      audit_log audit_records chains
-      conversations llm_conversations llm_messages llm_tool_calls llm_tool_call_attempts
-      llm_message_inference_requests llm_message_inference_responses llm_route_attempts
-      llm_message_inference_metrics llm_conversation_compactions llm_policy_evaluations
-      llm_security_events llm_registry_events
-      identity_providers identity_provider_capabilities identity_principals identities
-      identity_groups identity_group_memberships identity_audit_log
-      rbac_role_assignments rbac_runner_grants rbac_cross_team_grants
-      memory_traces memory_associations
-      metering_records metering_hourly_rollup
-      finlog_identities finlog_assets finlog_environments finlog_accounting finlog_executions
-      finlog_usages finlog_tags
-      webhooks webhook_deliveries webhook_dead_letters
-      tenants tasks_archive data_archive archive_manifest audit_archive_manifests
-      agent_cluster_nodes agent_cluster_tasks approval_queue
-    ]
+    # Derive expected tables by scanning migration files for create_table and drop_table calls.
+    # Tables dropped in later migrations are excluded.
+    migration_files = Dir.glob(File.join(migration_path, '*.rb')).sort
+    created = {}
+    dropped = Set.new
+
+    migration_files.each do |file|
+      basename = File.basename(file, '.rb')
+      num = basename[/\A(\d+)/, 1] || '000'
+      content = File.read(file)
+
+      content.scan(/create_table\?\s*\(\s*:?(\w+)/).flatten.each { |t| created[t] = num }
+      content.scan(/create_table\s*\(\s*:?(\w+)/).each do |match|
+        t = match[0]
+        # Skip guarded creates (next if/return if/next unless before create_table)
+        next if t == '?'
+        created[t] = num unless created.key?(t)
+      end
+
+      content.scan(/drop_table\s*\(\s*:?(\w+)/).each do |match|
+        t = match[0]
+        next if t == '?'
+        dropped << t
+      end
+    end
+
+    expected_tables = (created.keys - dropped - %w[sequel_migrations schema_migrations]).sort
 
     expected_tables.each do |table|
-      exists = db.table_exists?(table)
-      raise "expected table #{table} to exist" unless exists
+      exists = db.table_exists?(table.to_sym)
+      raise "expected table #{table} to exist (created in migration #{created[table]})" unless exists
     end
   end
 
