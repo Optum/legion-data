@@ -32,38 +32,26 @@ RSpec.describe 'Migrations' do
     # Derived from the actual production schema, not from scanning migration files
     # (which can't track renames and drops correctly).
     expected_tables = %i[
-      # Apollo
       apollo_access_log apollo_entries apollo_entries_archive
       apollo_expertise apollo_operations apollo_relations
-      # Audit / Governance
       audit_log audit_records chains
-      # Conversations / LLM
       conversations
       llm_conversation_compactions llm_conversations llm_escalation_events
       llm_message_inference_metrics llm_message_inference_requests
       llm_message_inference_responses llm_messages llm_policy_evaluations
       llm_registry_availability_records llm_registry_events llm_route_attempts
       llm_security_events llm_skill_events llm_tool_call_attempts llm_tool_calls
-      # Core
       digital_workers extensions extensions_registry functions
-      # Identity
       identities identity_audit_log identity_group_memberships
       identity_groups identity_principals identity_provider_capabilities
       identity_providers
-      # Memory
       memory_associations memory_traces
-      # Metering
       metering_hourly_rollup metering_records_archive
-      # RBAC
       rbac_cross_team_grants rbac_role_assignments rbac_runner_grants
-      # System
       nodes relationships runners schema_info settings
-      # Synapse
       synapse_challenges synapse_mutations synapse_proposals
       synapse_signals synapses
-      # Tasks / Tenants
       tasks tasks_archive tenants
-      # Webhooks
       webhooks
     ]
 
