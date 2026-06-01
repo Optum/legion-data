@@ -28,37 +28,48 @@ RSpec.describe 'Migrations' do
   end
 
   it 'has all expected tables' do
-    # Derive expected tables by scanning migration files for create_table and drop_table calls.
-    # Tables dropped in later migrations are excluded.
-    migration_files = Dir.glob(File.join(migration_path, '*.rb')).sort
-    created = {}
-    dropped = Set.new
-
-    migration_files.each do |file|
-      basename = File.basename(file, '.rb')
-      num = basename[/\A(\d+)/, 1] || '000'
-      content = File.read(file)
-
-      content.scan(/create_table\?\s*\(\s*:?(\w+)/).flatten.each { |t| created[t] = num }
-      content.scan(/create_table\s*\(\s*:?(\w+)/).each do |match|
-        t = match[0]
-        # Skip guarded creates (next if/return if/next unless before create_table)
-        next if t == '?'
-        created[t] = num unless created.key?(t)
-      end
-
-      content.scan(/drop_table\s*\(\s*:?(\w+)/).each do |match|
-        t = match[0]
-        next if t == '?'
-        dropped << t
-      end
-    end
-
-    expected_tables = (created.keys.to_a - dropped.to_a - %w[sequel_migrations schema_migrations]).sort
+    # Authoritative list of all tables that should exist after all migrations run.
+    # Derived from the actual production schema, not from scanning migration files
+    # (which can't track renames and drops correctly).
+    expected_tables = %i[
+      # Apollo
+      apollo_access_log apollo_entries apollo_entries_archive
+      apollo_expertise apollo_operations apollo_relations
+      # Audit / Governance
+      audit_log audit_records chains
+      # Conversations / LLM
+      conversations
+      llm_conversation_compactions llm_conversations llm_escalation_events
+      llm_message_inference_metrics llm_message_inference_requests
+      llm_message_inference_responses llm_messages llm_policy_evaluations
+      llm_registry_availability_records llm_registry_events llm_route_attempts
+      llm_security_events llm_skill_events llm_tool_call_attempts llm_tool_calls
+      # Core
+      digital_workers extensions extensions_registry functions
+      # Identity
+      identities identity_audit_log identity_group_memberships
+      identity_groups identity_principals identity_provider_capabilities
+      identity_providers
+      # Memory
+      memory_associations memory_traces
+      # Metering
+      metering_hourly_rollup metering_records_archive
+      # RBAC
+      rbac_cross_team_grants rbac_role_assignments rbac_runner_grants
+      # System
+      nodes relationships runners schema_info settings
+      # Synapse
+      synapse_challenges synapse_mutations synapse_proposals
+      synapse_signals synapses
+      # Tasks / Tenants
+      tasks tasks_archive tenants
+      # Webhooks
+      webhooks
+    ]
 
     expected_tables.each do |table|
-      exists = db.table_exists?(table.to_sym)
-      raise "expected table #{table} to exist (created in migration #{created[table]})" unless exists
+      exists = db.table_exists?(table)
+      raise "expected table #{table} to exist" unless exists
     end
   end
 
