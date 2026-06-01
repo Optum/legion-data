@@ -1,5 +1,11 @@
 # Legion::Data Changelog
 
+## [1.10.0] - 2026-06-01
+
+### Added
+
+- Migration 129: creates `llm_skill_events` table as a core LLM lifecycle table (moved from lex-llm-ledger extension). Columns: `uuid`, `conversation_id`, `request_ref`, `skill_name`, `skill_version`, `trigger`, `status`, `duration_ms`, `identity_canonical_name`, `identity_principal_id`, `identity_id`, `schema_version`, `recorded_at`, `inserted_at`. Indexes on `conversation_id`, `request_ref`, `skill_name`, `identity_canonical_name`, `recorded_at`, `inserted_at`.
+
 ## [1.9.0] - 2026-06-01
 
 ### Added
