@@ -60,9 +60,9 @@ Sequel.migration do
         String :operation, size: 50, null: false
         String :actor, size: 255, null: false
         String :target_type, size: 50
-        String :target_ids, text: true          # serialized array; PG uses INTEGER[]
+        String :target_ids, text: true # serialized array; PG uses INTEGER[]
         String :summary, text: true
-        String :detail, text: true, default: '{}'  # serialized json; PG uses JSONB
+        String :detail, text: true, default: '{}' # serialized json; PG uses JSONB
         String :old_state, text: true
         String :new_state, text: true
         String :reason, text: true

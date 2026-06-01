@@ -17,10 +17,16 @@ Metrics/ClassLength:
   Max: 1500
 Metrics/ModuleLength:
   Max: 1500
-Metrics/BlockLength:
-  Max: 40
+Naming/VariableNumber:
   Exclude:
     - 'spec/**/*'
+Legion/Framework/EagerSequelModel:
+  Enabled: false
+Metrics/BlockLength:
+  Max: 100
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/legion/data/migrations/*'
 Metrics/AbcSize:
   Max: 60
   Exclude:

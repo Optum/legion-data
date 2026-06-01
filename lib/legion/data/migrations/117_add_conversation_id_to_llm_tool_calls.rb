@@ -14,8 +14,8 @@ Sequel.migration do
       # On SQLite, drop_column triggers table recreation which silently destroys
       # partial indexes. Recreate the one from migration 109.
       add_index :identity_principal_id,
-                name: :idx_tool_calls_identity_principal_id,
-                where: Sequel.negate(identity_principal_id: nil),
+                name:          :idx_tool_calls_identity_principal_id,
+                where:         Sequel.negate(identity_principal_id: nil),
                 if_not_exists: true
     end
   end

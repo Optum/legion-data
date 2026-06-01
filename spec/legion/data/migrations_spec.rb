@@ -15,12 +15,12 @@ RSpec.describe 'Migrations' do
 
   it 'has run all migrations to the latest version' do
     max_migration = Dir.glob(File.join(migration_path, '*.rb'))
-                      .map { |f| File.basename(f, '.rb')[/\A(\d+)/, 1]&.to_i }
-                      .compact.max
-    raise "no migrations found" unless max_migration
+                       .filter_map { |f| File.basename(f, '.rb')[/\A(\d+)/, 1]&.to_i }
+                       .max
+    raise 'no migrations found' unless max_migration
 
     # Sequel default is schema_migrations, but try common variants
-    version_table = [:schema_migrations, :schema_info, :sequel_migrations].find { |t| db.table_exists?(t) }
+    version_table = %i[schema_migrations schema_info sequel_migrations].find { |t| db.table_exists?(t) }
     skip "no migration version table found (#{db.adapter_scheme})" unless version_table
 
     applied = db[version_table].select_map(:version).map(&:to_i).sort
@@ -57,15 +57,15 @@ RSpec.describe 'Migrations' do
   it 'has critical indexes on key tables' do
     critical_indexes = {
       llm_tool_calls: ['idx_tool_calls_identity_principal_id'],
-      functions: ['idx_functions_component_type'],
+      functions:      ['idx_functions_component_type']
     }
 
     critical_indexes.each do |table, index_names|
-      if db.adapter_scheme == :postgres
-        indexes = db.indexes(table).keys.map(&:to_s)
-      else
-        indexes = db[:sqlite_master].where(type: 'index', tbl_name: table.to_s).select_map(:name)
-      end
+      indexes = if db.adapter_scheme == :postgres
+                  db.indexes(table).keys.map(&:to_s)
+                else
+                  db[:sqlite_master].where(type: 'index', tbl_name: table.to_s).select_map(:name)
+                end
 
       index_names.each do |name|
         expect(indexes).to include(name), "expected index #{name} on #{table}"
