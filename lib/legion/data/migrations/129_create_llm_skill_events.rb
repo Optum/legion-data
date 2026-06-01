@@ -6,26 +6,19 @@ Sequel.migration do
       primary_key :id
 
       String   :uuid, null: false, unique: true, size: 36
-      Integer  :conversation_id
-      String   :request_ref
-      String   :skill_name, null: false
+      Integer  :conversation_id, index: true
+      String   :request_ref, index: true
+      String   :skill_name, null: false, index: true
       String   :skill_version
       String   :trigger
       String   :status, null: false, default: 'completed'
       Integer  :duration_ms, default: 0
-      String   :identity_canonical_name
+      String   :identity_canonical_name, index: true
       Integer  :identity_principal_id
       Integer  :identity_id
       Integer  :schema_version, null: false, default: 15
-      DateTime :recorded_at, null: false
-      DateTime :inserted_at, null: false, default: Sequel::CURRENT_TIMESTAMP
-
-      index [:conversation_id]
-      index [:request_ref]
-      index [:skill_name]
-      index [:identity_canonical_name]
-      index [:recorded_at]
-      index [:inserted_at]
+      DateTime :recorded_at, null: false, index: true
+      DateTime :inserted_at, null: false, default: Sequel::CURRENT_TIMESTAMP, index: true
     end
   end
 
