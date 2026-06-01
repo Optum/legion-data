@@ -54,7 +54,7 @@ RSpec.describe 'Migrations' do
       end
     end
 
-    expected_tables = (created.keys - dropped - %w[sequel_migrations schema_migrations]).sort
+    expected_tables = (created.keys.to_a - dropped.to_a - %w[sequel_migrations schema_migrations]).sort
 
     expected_tables.each do |table|
       exists = db.table_exists?(table.to_sym)
