@@ -36,7 +36,7 @@ RSpec.describe 'Migrations' do
       apollo_expertise apollo_operations apollo_relations
       audit_log audit_records chains
       conversations
-      llm_conversation_compactions llm_conversations llm_escalation_events
+      llm_conversation_compactions llm_conversations
       llm_message_inference_metrics llm_message_inference_requests
       llm_message_inference_responses llm_messages llm_policy_evaluations
       llm_registry_availability_records llm_registry_events llm_route_attempts
