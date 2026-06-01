@@ -117,7 +117,8 @@ module Legion
 
         def load_event_file(path, sub_namespace)
           ::JSON.parse(File.binread(path), symbolize_names: true)
-        rescue Errno::ENOENT
+        rescue Errno::ENOENT => e
+          log.debug("spool event file not found: #{path}: #{e.message}")
           nil
         rescue ::JSON::ParserError, EOFError, ArgumentError => e
           quarantine_corrupt_file(path, sub_namespace, e)
