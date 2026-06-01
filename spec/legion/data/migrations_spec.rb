@@ -39,7 +39,7 @@ RSpec.describe 'Migrations' do
       llm_conversation_compactions llm_conversations
       llm_message_inference_metrics llm_message_inference_requests
       llm_message_inference_responses llm_messages llm_policy_evaluations
-      llm_registry_availability_records llm_registry_events llm_route_attempts
+      llm_registry_events llm_route_attempts
       llm_security_events llm_skill_events llm_tool_call_attempts llm_tool_calls
       digital_workers extensions extensions_registry functions
       identities identity_audit_log identity_group_memberships
