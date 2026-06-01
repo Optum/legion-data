@@ -198,7 +198,12 @@ module Legion
             connected:          Legion::Settings[:data][:connected],
             fallback_active:    @fallback_active || false,
             configured_adapter: Legion::Settings[:data][:adapter]&.to_sym || :sqlite,
-            sequel_alive:       (begin; !@sequel&.test_connection.nil?; rescue StandardError => e; log.debug("connection health check failed: #{e.message}"); false; end)
+            sequel_alive:       (begin
+              !@sequel&.test_connection.nil?
+            rescue StandardError => e
+              log.debug("connection health check failed: #{e.message}")
+              false
+            end)
           }
         end
 

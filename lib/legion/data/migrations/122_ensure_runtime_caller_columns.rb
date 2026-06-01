@@ -13,7 +13,7 @@ Sequel.migration do
   up do
     if table_exists?(:llm_message_inference_requests)
       cols = schema(:llm_message_inference_requests).map(&:first)
-      if !(cols.include?(:runtime_caller_class) && cols.include?(:runtime_caller_client))
+      unless cols.include?(:runtime_caller_class) && cols.include?(:runtime_caller_client)
         alter_table(:llm_message_inference_requests) do
           add_column :runtime_caller_class, String, size: 255, null: true, index: true unless cols.include?(:runtime_caller_class)
           add_column :runtime_caller_client, String, size: 255, null: true unless cols.include?(:runtime_caller_client)
