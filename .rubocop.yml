@@ -20,6 +20,7 @@ Metrics/ModuleLength:
 Naming/VariableNumber:
   Exclude:
     - 'spec/**/*'
+    - lib/legion/data/connection.rb
 Legion/Framework/EagerSequelModel:
   Enabled: false
 Metrics/BlockLength:
@@ -27,6 +28,10 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'lib/legion/data/migrations/*'
+ThreadSafety/ClassInstanceVariable:
+  Enabled: false
+ThreadSafety/ClassAndModuleAttributes:
+  Enabled: false
 Metrics/AbcSize:
   Max: 60
   Exclude:
