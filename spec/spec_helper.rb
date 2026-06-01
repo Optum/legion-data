@@ -27,6 +27,8 @@ db_path = File.expand_path('~/.legionio/data/legion_test.db')
 FileUtils.rm_f(db_path)
 
 Legion::Data.setup
+Legion::Data::Migration.migrate(Legion::Data::Connection.sequel,
+                                File.expand_path('../lib/legion/data/migrations', __dir__))
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = '.rspec_status'
