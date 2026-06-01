@@ -49,8 +49,6 @@ RSpec.describe 'Migrations' do
       metering_hourly_rollup metering_records_archive
       rbac_cross_team_grants rbac_role_assignments rbac_runner_grants
       nodes relationships runners schema_info settings
-      synapse_challenges synapse_mutations synapse_proposals
-      synapse_signals synapses
       tasks tasks_archive tenants
       webhooks
     ]
