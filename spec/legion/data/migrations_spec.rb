@@ -19,11 +19,12 @@ RSpec.describe 'Migrations' do
                       .compact.max
     raise "no migrations found" unless max_migration
 
-    version_table = db.table_exists?(:schema_migrations) ? :schema_migrations : :sequel_migrations
+    # Sequel default is schema_migrations, but try common variants
+    version_table = [:schema_migrations, :schema_info, :sequel_migrations].find { |t| db.table_exists?(t) }
+    skip "no migration version table found (#{db.adapter_scheme})" unless version_table
+
     applied = db[version_table].select_map(:version).map(&:to_i).sort
     expect(applied.last).to eq(max_migration)
-  rescue ArgumentError
-    skip "no schema_migrations table found (#{db.adapter_scheme})"
   end
 
   it 'has all expected tables' do
@@ -48,7 +49,8 @@ RSpec.describe 'Migrations' do
     ]
 
     expected_tables.each do |table|
-      expect(db.table_exists?(table)).to be true, "expected table #{table} to exist"
+      exists = db.table_exists?(table)
+      raise "expected table #{table} to exist" unless exists
     end
   end
 
