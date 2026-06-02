@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    return if table_exists?(:metering_hourly_rollup)
+    next if table_exists?(:metering_hourly_rollup)
 
     create_table(:metering_hourly_rollup) do
       primary_key :id

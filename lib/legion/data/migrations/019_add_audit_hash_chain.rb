@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:audit_log)
+    next unless table_exists?(:audit_log)
 
     cols    = schema(:audit_log).map(&:first)
     idxs    = indexes(:audit_log)
@@ -33,7 +33,7 @@ Sequel.migration do
   end
 
   down do
-    return unless table_exists?(:audit_log)
+    next unless table_exists?(:audit_log)
 
     cols = schema(:audit_log).map(&:first)
 

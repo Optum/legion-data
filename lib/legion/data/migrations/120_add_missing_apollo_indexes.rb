@@ -14,7 +14,7 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:apollo_entries)
+    next unless table_exists?(:apollo_entries)
 
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_submitted_by ON apollo_entries (submitted_by)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_submitted_from ON apollo_entries (submitted_from)'
@@ -29,26 +29,26 @@ Sequel.migration do
     run "CREATE INDEX IF NOT EXISTS idx_apollo_decay_target ON apollo_entries (updated_at) WHERE status != 'archived'"
     run "CREATE INDEX IF NOT EXISTS idx_apollo_candidates ON apollo_entries (status, source_provider, source_channel) WHERE status = 'candidate'"
 
-    return unless table_exists?(:apollo_entries_archive)
+    next unless table_exists?(:apollo_entries_archive)
 
     run 'CREATE INDEX IF NOT EXISTS idx_archive_content_hash ON apollo_entries_archive (content_hash)'
     run 'CREATE INDEX IF NOT EXISTS idx_archive_source_agent ON apollo_entries_archive (source_agent)'
     run 'CREATE INDEX IF NOT EXISTS idx_archive_archived_at ON apollo_entries_archive (archived_at)'
 
-    return unless table_exists?(:apollo_relations)
+    next unless table_exists?(:apollo_relations)
 
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_rel_from ON apollo_relations (from_entry_id)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_rel_to ON apollo_relations (to_entry_id)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_rel_type ON apollo_relations (relation_type)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_rel_composite ON apollo_relations (from_entry_id, relation_type)'
 
-    return unless table_exists?(:apollo_expertise)
+    next unless table_exists?(:apollo_expertise)
 
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_exp_agent ON apollo_expertise (agent_id)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_exp_domain ON apollo_expertise (domain)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_exp_composite ON apollo_expertise (agent_id, domain)'
 
-    return unless table_exists?(:apollo_operations)
+    next unless table_exists?(:apollo_operations)
 
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_ops_created ON apollo_operations (created_at)'
     run 'CREATE INDEX IF NOT EXISTS idx_apollo_ops_operation ON apollo_operations (operation)'

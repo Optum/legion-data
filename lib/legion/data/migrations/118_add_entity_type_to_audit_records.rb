@@ -7,10 +7,10 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:audit_records)
+    next unless table_exists?(:audit_records)
 
     existing = schema(:audit_records).map(&:first)
-    return if existing.include?(:entity_type)
+    next if existing.include?(:entity_type)
 
     alter_table(:audit_records) do
       add_column :entity_type, String, size: 100, null: true
@@ -20,7 +20,7 @@ Sequel.migration do
   end
 
   down do
-    return unless table_exists?(:audit_records)
+    next unless table_exists?(:audit_records)
 
     alter_table(:audit_records) do
       drop_column :entity_type if schema(:audit_records).any? { |col, _| col == :entity_type }
