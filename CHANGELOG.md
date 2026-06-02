@@ -1,5 +1,11 @@
 # Legion::Data Changelog
 
+## [1.10.2] - 2026-06-02
+
+### Fixed
+- Replace `return` with `next` in migration blocks (LocalJumpError under Sequel instance_exec)
+- Make migrations 118-130 idempotent with table_exists/schema guards for safe re-run after partial failures
+
 ## [1.10.1] - 2026-06-01
 
 ### Added
