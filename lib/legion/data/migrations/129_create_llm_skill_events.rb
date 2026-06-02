@@ -2,6 +2,8 @@
 
 Sequel.migration do
   up do
+    next if table_exists?(:llm_skill_events)
+
     create_table(:llm_skill_events) do
       primary_key :id
 
@@ -23,6 +25,6 @@ Sequel.migration do
   end
 
   down do
-    drop_table :llm_skill_events
+    drop_table(:llm_skill_events) if table_exists?(:llm_skill_events)
   end
 end
