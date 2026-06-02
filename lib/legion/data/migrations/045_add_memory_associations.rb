@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    return if table_exists?(:memory_associations)
+    next if table_exists?(:memory_associations)
 
     create_table(:memory_associations) do
       primary_key :id

@@ -2,7 +2,7 @@
 
 Sequel.migration do
   up do
-    return unless table_exists?(:memory_traces)
+    next unless table_exists?(:memory_traces)
 
     existing = schema(:memory_traces).map(&:first)
 
@@ -45,7 +45,7 @@ Sequel.migration do
   end
 
   down do
-    return unless table_exists?(:memory_traces)
+    next unless table_exists?(:memory_traces)
 
     existing = schema(:memory_traces).map(&:first)
 

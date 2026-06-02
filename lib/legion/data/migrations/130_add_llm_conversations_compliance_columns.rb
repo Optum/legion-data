@@ -2,16 +2,20 @@
 
 Sequel.migration do
   up do
+    next unless table_exists?(:llm_conversations)
+
+    existing = schema(:llm_conversations).map(&:first)
+
     alter_table(:llm_conversations) do
-      add_column :pii_types_json, :text, null: true
-      add_column :jurisdictions_json, :text, null: true
-      add_column :schema_version, Integer, null: false, default: 15
+      add_column :pii_types_json, :text, null: true unless existing.include?(:pii_types_json)
+      add_column :jurisdictions_json, :text, null: true unless existing.include?(:jurisdictions_json)
     end
   end
 
   down do
+    next unless table_exists?(:llm_conversations)
+
     alter_table(:llm_conversations) do
-      drop_column :schema_version
       drop_column :jurisdictions_json
       drop_column :pii_types_json
     end

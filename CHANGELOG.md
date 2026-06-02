@@ -1,11 +1,25 @@
 # Legion::Data Changelog
 
+## [1.10.2] - 2026-06-02
+
+### Fixed
+- Replace `return` with `next` in migration blocks — Sequel uses `instance_exec`, bare `return` raises `LocalJumpError` (migrations 019, 044, 045, 046, 118, 120)
+- Make migrations 118-130 idempotent with schema column checks for safe re-run after partial failures
+- Restore migration 131 (`add_column :schema_version` to `llm_tool_calls`) with idempotent guard — preserves contiguous migration sequence for existing installations
+
+### Added
+- Migration 132: drops unused `schema_version` column from `llm_tool_calls` (no code reads/writes it)
+- Migration 133: allows NULL on `context_tokens` in `llm_message_inference_requests` — prevents NOT NULL violations when token counts are unavailable
+
 ## [1.10.1] - 2026-06-01
 
 ### Added
 
-- Migration 130: adds `pii_types_json` (TEXT), `jurisdictions_json` (TEXT), and `schema_version` (Integer, default 15) to `llm_conversations`. Required by lex-llm-ledger OfficialRecordWriter for compliance metadata.
-- Migration 131: adds `schema_version` (Integer, default 15) to `llm_tool_calls`. Required by lex-llm-ledger OfficialRecordWriter.
+- Migration 130: adds `pii_types_json` (TEXT) and `jurisdictions_json` (TEXT) to `llm_conversations`. Required by lex-llm-ledger OfficialRecordWriter for compliance metadata.
+
+### Removed
+
+- `schema_version` column removed from lex-llm-ledger writer — no longer written to any table. Column remains on `llm_skill_events` (migration 129) but is not actively populated.
 
 ## [1.10.0] - 2026-06-01
 
