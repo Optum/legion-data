@@ -4,8 +4,11 @@
 
 ### Added
 
-- Migration 130: adds `pii_types_json` (TEXT), `jurisdictions_json` (TEXT), and `schema_version` (Integer, default 15) to `llm_conversations`. Required by lex-llm-ledger OfficialRecordWriter for compliance metadata.
-- Migration 131: adds `schema_version` (Integer, default 15) to `llm_tool_calls`. Required by lex-llm-ledger OfficialRecordWriter.
+- Migration 130: adds `pii_types_json` (TEXT) and `jurisdictions_json` (TEXT) to `llm_conversations`. Required by lex-llm-ledger OfficialRecordWriter for compliance metadata.
+
+### Removed
+
+- `schema_version` column removed from lex-llm-ledger writer — no longer written to any table. Column remains on `llm_skill_events` (migration 129) but is not actively populated.
 
 ## [1.10.0] - 2026-06-01
 
