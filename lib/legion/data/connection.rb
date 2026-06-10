@@ -581,12 +581,12 @@ module Legion
 
           if data[:connection_validation] != false
             @sequel.extension(:connection_validator)
-            @sequel.pool.connection_validation_timeout = data[:connection_validation_timeout] || 600
+            @sequel.pool.connection_validation_timeout = data[:connection_validation_timeout]
           end
 
           if data[:connection_expiration] != false
             @sequel.extension(:connection_expiration)
-            @sequel.pool.connection_expiration_timeout = data[:connection_expiration_timeout] || 14_400
+            @sequel.pool.connection_expiration_timeout = data[:connection_expiration_timeout]
           end
         rescue StandardError => e
           handle_exception(e, level: :warn, handled: true, operation: :configure_extensions, adapter: adapter)
