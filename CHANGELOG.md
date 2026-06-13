@@ -1,6 +1,6 @@
 # Legion::Data Changelog
 
-## [Unreleased]
+## [1.10.3] - 2026-06-10
 
 ### Changed
 - `connection_validation` now defaults to `false` — the Sequel connection_validator extension issues a `SELECT NULL` on every pool checkout/checkin and before real queries, which measurably degrades throughput; query-time error handling already recovers stale/dead connections. Set `connection_validation: true` in settings to opt back in (timeout semantics unchanged: `-1` validates every checkout)
