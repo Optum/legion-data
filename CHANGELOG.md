@@ -1,5 +1,10 @@
 # Legion::Data Changelog
 
+## [1.10.4] - 2026-06-12
+
+### Added
+- Migration 134: adds `operation` (String 64), `dispatch_path` (String 32), and `idempotency_key` (String 128) columns to `llm_route_attempts` with indexes on `operation` and `idempotency_key`. Enables per-attempt tracking of the LLM operation type, routing path, and deduplication key.
+
 ## [1.10.3] - 2026-06-10
 
 ### Changed
