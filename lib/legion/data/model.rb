@@ -21,7 +21,8 @@ module Legion
              rbac/role_assignments rbac/runner_grants rbac/cross_team_grants
              llm/conversation llm/message llm/message_inference_request
              llm/message_inference_response llm/route_attempt
-             llm/message_inference_metric llm/tool_call llm/tool_call_attempt
+             llm/message_inference_metric llm/context_accounting_event
+             llm/tool_call llm/tool_call_attempt
              llm/conversation_compaction llm/policy_evaluation
              llm/security_event llm/registry_event]
         end

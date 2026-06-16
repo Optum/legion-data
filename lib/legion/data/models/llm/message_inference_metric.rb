@@ -11,6 +11,7 @@ module Legion
 
           many_to_one :message_inference_request
           many_to_one :message_inference_response
+          one_to_many :context_accounting_events
 
           class << self
             def finance_usage_by_cost_center_model_day(cost_center: nil, model_key: nil, from: nil, to: nil)
