@@ -1,5 +1,18 @@
 # Legion::Data Changelog
 
+## [1.10.5] - 2026-06-16
+
+### Added
+- Migration 135: adds context token accounting columns to `llm_message_inference_metrics` — `llm_message_inference_metrics` is now the canonical source of truth for all pipeline context token metrics (request messages, loaded/curated/archived history, thinking strip savings, context-window enforcement savings, RAG injection, system/baseline prompt, tool definitions, final context estimate). Includes `context_accounting_status` and `context_accounting_json` for provenance.
+- Migration 135: creates `llm_context_accounting_events` table for drill-down evidence rows (not a second source of token truth — totals reconcile to the canonical metrics row).
+- Model: `Legion::Data::Models::LLM::ContextAccountingEvent` with foreign key associations to request, response, and metric.
+- Association: `MessageInferenceMetric#context_accounting_events`.
+
+## [1.10.4] - 2026-06-12
+
+### Added
+- Migration 134: adds `operation` (String 64), `dispatch_path` (String 32), and `idempotency_key` (String 128) columns to `llm_route_attempts` with indexes on `operation` and `idempotency_key`. Enables per-attempt tracking of the LLM operation type, routing path, and deduplication key.
+
 ## [1.10.3] - 2026-06-10
 
 ### Changed
