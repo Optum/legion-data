@@ -1,0 +1,93 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions: {}
+
+jobs:
+  ci:
+    permissions:
+      contents: read
+    uses: LegionIO/.github/.github/workflows/ci.yml@main
+
+  ci-postgres:
+    name: "RSpec (PostgreSQL)"
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: legion
+          POSTGRES_PASSWORD: legion
+          POSTGRES_DB: legionio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Run RSpec (PostgreSQL adapter)
+        env:
+          LEGION_DATA_ADAPTER: postgres
+          LEGION_DATA_HOST: 127.0.0.1
+          LEGION_DATA_PORT: 5432
+          LEGION_DATA_USER: legion
+          LEGION_DATA_PASSWORD: legion
+          LEGION_DATA_DATABASE: legionio
+        run: bundle exec rspec
+
+  lint:
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
+    uses: LegionIO/.github/.github/workflows/lint-patterns.yml@main
+
+  security:
+    permissions:
+      contents: read
+      security-events: write
+    uses: LegionIO/.github/.github/workflows/security-scan.yml@main
+
+  version-changelog:
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: LegionIO/.github/.github/workflows/version-changelog.yml@main
+
+  dependency-review:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: LegionIO/.github/.github/workflows/dependency-review.yml@main
+
+  stale:
+    if: github.event_name == 'schedule'
+    permissions:
+      issues: write
+      pull-requests: write
+    uses: LegionIO/.github/.github/workflows/stale.yml@main
+
+  release:
+    needs: [ci, ci-postgres, lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      packages: write
+    uses: LegionIO/.github/.github/workflows/release.yml@main
+    secrets:
+      rubygems-api-key: ${{ secrets.RUBYGEMS_API_KEY }}

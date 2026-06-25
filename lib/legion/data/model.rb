@@ -1,15 +1,34 @@
+# frozen_string_literal: true
+
+require 'legion/logging/helper'
+
 module Legion
   module Data
     module Models
       class << self
+        include Legion::Logging::Helper
+
         attr_reader :loaded_models
 
         def models
-          %w[extension function task runner node setting]
+          %w[extension function relationship chain task runner node setting digital_worker
+             apollo_entry apollo_relation apollo_expertise apollo_access_log audit_log
+             audit_record extract_step_timing
+             identity/identity identity/principal identity/providers identity/group
+             identity/group_memberships identity/audit_log
+             apollo/entries apollo/relation apollo/access_log apollo/expertise
+             apollo/operation
+             rbac/role_assignments rbac/runner_grants rbac/cross_team_grants
+             llm/conversation llm/message llm/message_inference_request
+             llm/message_inference_response llm/route_attempt
+             llm/message_inference_metric llm/context_accounting_event
+             llm/tool_call llm/tool_call_attempt
+             llm/conversation_compaction llm/policy_evaluation
+             llm/security_event llm/registry_event]
         end
 
         def load
-          Legion::Logging.info 'Loading Legion::Data::Models'
+          log.info 'Loading Legion::Data::Models'
           @loaded_models ||= []
           require_sequel_models(models)
           Legion::Settings[:data][:models][:loaded] = true
@@ -21,14 +40,14 @@ module Legion
         end
 
         def load_sequel_model(model)
-          Legion::Logging.debug("Trying to load #{model}.rb")
+          log.debug("Trying to load #{model}.rb")
           require_relative "models/#{model}"
           @loaded_models << model
-          Legion::Logging.debug("Successfully loaded #{model}")
+          log.debug("Successfully loaded #{model}")
           model
         rescue LoadError => e
-          Legion::Logging.fatal("Failed to load #{model}")
-          raise e unless Legion::Settings[:data][:models][:continue_on_fail]
+          handle_exception(e, level: :fatal, operation: :load_sequel_model, model: model)
+          raise e unless Legion::Settings[:data][:models][:continue_on_load_fail]
         end
       end
     end

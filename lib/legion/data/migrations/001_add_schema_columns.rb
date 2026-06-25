@@ -1,10 +1,16 @@
+# frozen_string_literal: true
+
 require 'sequel/extensions/migration'
 
 Sequel.migration do
   up do
-    run 'ALTER TABLE `schema_info` ADD `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `version`;'
-    run 'ALTER TABLE `schema_info` ADD `updated_at` TIMESTAMP  NULL  ON UPDATE CURRENT_TIMESTAMP  AFTER `created_at`;'
-    run 'ALTER TABLE `schema_info` ADD `catalog` VARCHAR(255)  NULL  DEFAULT NULL  AFTER `version`;'
+    alter_table(:schema_info) do
+      # SQLite does not support non-constant defaults in ALTER TABLE ADD COLUMN,
+      # so we omit the default here and let the application set timestamps.
+      add_column :created_at, DateTime, null: true
+      add_column :updated_at, DateTime, null: true
+      add_column :catalog, String, size: 255, null: true
+    end
   end
 
   down do

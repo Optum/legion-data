@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Sequel.migration do
   up do
     lex = from(:extensions).insert(namespace: 'Legion::Extensions::Lex', name: 'lex', exchange: 'lex', uri: 'lex')

@@ -1,0 +1,41 @@
+# Default owner — all files
+* @Esity
+
+# Core library code
+# lib/ @Esity @future-core-team
+
+# Database connection
+# lib/legion/data/connection.rb @Esity @future-infra-team
+
+# Migrations
+# lib/legion/data/migrations/ @Esity @future-core-team
+
+# Models
+# lib/legion/data/models/ @Esity @future-core-team
+
+# Local SQLite (agentic cognitive state)
+# lib/legion/data/local.rb @Esity @future-ai-team
+# lib/legion/data/local/ @Esity @future-ai-team
+
+# Encryption at rest
+# lib/legion/data/encryption/ @Esity @future-security-team
+
+# Event store (governance)
+# lib/legion/data/event_store/ @Esity @future-security-team
+# lib/legion/data/event_store.rb @Esity @future-security-team
+
+# Vector helpers (pgvector / Apollo)
+# lib/legion/data/vector.rb @Esity @future-ai-team
+
+# Storage tiers and archival
+# lib/legion/data/storage_tiers.rb @Esity @future-infra-team
+# lib/legion/data/archival/ @Esity @future-infra-team
+
+# Specs
+# spec/ @Esity @future-contributors
+
+# Documentation
+# *.md @Esity @future-docs-team
+
+# CI/CD
+# .github/ @Esity

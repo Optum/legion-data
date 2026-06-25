@@ -1,15 +1,15 @@
+# frozen_string_literal: true
+
 Sequel.migration do
   up do
-    run "CREATE TABLE `settings` (
-      `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-      `key` varchar(128) NOT NULL,
-      `value` varchar(256) NOT NULL,
-      `encrypted` tinyint(1) unsigned NOT NULL DEFAULT '0',
-      `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `key` (`key`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    create_table(:settings) do
+      primary_key :id
+      String :key, size: 128, null: false, unique: true
+      String :value, size: 256, null: false
+      TrueClass :encrypted, null: false, default: false
+      DateTime :created, null: false, default: Sequel::CURRENT_TIMESTAMP
+      DateTime :updated, null: true
+    end
   end
 
   down do
